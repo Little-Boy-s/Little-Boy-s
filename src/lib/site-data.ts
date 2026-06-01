@@ -87,6 +87,7 @@ export interface Achievement {
   metric: string;
   title: string;
   description: string;
+  image_url?: string;
 }
 
 export const achievements: Achievement[] = [
@@ -94,20 +95,24 @@ export const achievements: Achievement[] = [
     metric: "10+",
     title: "Projects Delivered",
     description: "Successfully shipped production applications.",
+    image_url: "",
   },
   {
     metric: "99.9%",
     title: "Uptime Guaranteed",
     description: "Observed across all scalable systems.",
+    image_url: "",
   },
   {
     metric: "200ms",
     title: "Avg Latency",
     description: "For p95 API response standards.",
+    image_url: "",
   },
   {
     metric: "5+",
     title: "Hackathon Awards",
     description: "Won in engineering competitions.",
+    image_url: "",
   },
 ];
