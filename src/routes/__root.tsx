@@ -16,23 +16,21 @@ import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
-    <SiteLayout>
-      <div className="flex min-h-[60vh] items-center justify-center px-4">
-        <div className="max-w-md text-center">
-          <h1 className="text-7xl font-display font-black text-brand">404</h1>
-          <h2 className="mt-4 text-xl font-semibold">Page Not Found</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            The page you are looking for does not exist or has been moved.
-          </p>
-          <Link
-            to="/"
-            className="mt-6 inline-flex items-center justify-center rounded-full bg-cyan px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 shadow-[0_0_15px_rgba(34,211,238,0.4)]"
-          >
-            Back to Home
-          </Link>
-        </div>
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-7xl font-display font-black text-brand">404</h1>
+        <h2 className="mt-4 text-xl font-semibold">Page Not Found</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The page you are looking for does not exist or has been moved.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 inline-flex items-center justify-center rounded-full bg-cyan px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 shadow-[0_0_15px_rgba(34,211,238,0.4)]"
+        >
+          Back to Home
+        </Link>
       </div>
-    </SiteLayout>
+    </div>
   );
 }
 
@@ -41,33 +39,31 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 
   return (
-    <SiteLayout>
-      <div className="flex min-h-[60vh] items-center justify-center px-4">
-        <div className="max-w-md text-center">
-          <h1 className="text-xl font-semibold">Page Failed to Load</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            An unexpected error occurred. Please try again or return to the home page.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            <button
-              onClick={() => {
-                router.invalidate();
-                reset();
-              }}
-              className="rounded-full bg-cyan px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 shadow-[0_0_15px_rgba(34,211,238,0.4)]"
-            >
-              Try Again
-            </button>
-            <a
-              href="/"
-              className="rounded-full border border-border bg-background px-5 py-2.5 text-sm font-semibold hover:bg-secondary"
-            >
-              Back to Home
-            </a>
-          </div>
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold">Page Failed to Load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          An unexpected error occurred. Please try again or return to the home page.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="rounded-full bg-cyan px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 shadow-[0_0_15px_rgba(34,211,238,0.4)]"
+          >
+            Try Again
+          </button>
+          <a
+            href="/"
+            className="rounded-full border border-border bg-background px-5 py-2.5 text-sm font-semibold hover:bg-secondary"
+          >
+            Back to Home
+          </a>
         </div>
       </div>
-    </SiteLayout>
+    </div>
   );
 }
 
