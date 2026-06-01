@@ -209,9 +209,9 @@ function Home() {
 
         <Reveal delay={120}>
           <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-5">
-            {achievementsData.map((stat, i) => (
+            {achievementsData.slice(0, 4).map((stat, i) => (
               <div
-                key={stat.title}
+                key={stat.title || i}
                 className="relative rounded-2xl border border-border bg-card/40 p-6 md:p-8 backdrop-blur-xl hover:border-cyan/50 hover:bg-white/5 transition-all text-center group"
               >
                 <div className="absolute top-3 right-3 size-2 rounded-full bg-cyan/40 group-hover:bg-cyan group-hover:scale-125 transition-all" />
@@ -226,6 +226,17 @@ function Home() {
                 </p>
               </div>
             ))}
+          </div>
+        </Reveal>
+
+        <Reveal delay={160}>
+          <div className="mt-10 text-center">
+            <Link
+              to="/achievements"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-white/5 hover:bg-white/10 hover:text-cyan px-5 py-2.5 font-mono text-xs font-semibold transition-all"
+            >
+              ./view-all-achievements ({achievementsData.length}) <ArrowRight className="size-4" />
+            </Link>
           </div>
         </Reveal>
       </section>

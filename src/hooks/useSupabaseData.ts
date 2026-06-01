@@ -224,12 +224,13 @@ export function useAchievements() {
           return mockAchievements;
         }
 
-        if (!data || data.length === 0) {
-          console.info("Achievements database table is empty. Showing mock achievements.");
-          return mockAchievements;
-        }
-
-        return data as Achievement[];
+        return data.map((d: any) => ({
+          id: d.id,
+          metric: d.metric || "",
+          title: d.title,
+          description: d.description || "",
+          image_url: d.image_url || "",
+        }));
       } catch (err) {
         console.warn("Failed to reach Supabase database for achievements. Falling back to mock data.", err);
         return mockAchievements;
