@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { useProjects, useBuilders, useServices } from "@/hooks/useSupabaseData";
+import { useProjects, useBuilders, useServices, useCategories } from "@/hooks/useSupabaseData";
 import { projects as mockProjects } from "@/lib/site-data";
 import { builders as mockBuilders } from "@/lib/team-data";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
 });
 
-type Tab = "projects" | "builders" | "services" | "sql-setup";
+type Tab = "projects" | "builders" | "services" | "categories" | "sql-setup";
 
 function AdminDashboard() {
   const queryClient = useQueryClient();
@@ -30,19 +30,22 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("projects");
 
   // Fetch real data (falls back to mock automatically if not connected)
-  const { data: projectsData, isLoading: loadingProjects } = useProjects();
-  const { data: buildersData, isLoading: loadingBuilders } = useBuilders();
-  const { data: servicesData, isLoading: loadingServices } = useServices();
+  const { data: projectsData } = useProjects();
+  const { data: buildersData } = useBuilders();
+  const { data: servicesData } = useServices();
+  const { data: categoriesData } = useCategories();
 
   // Local grid states (draft values of Excel table before saving)
   const [localProjects, setLocalProjects] = useState<any[]>([]);
   const [localBuilders, setLocalBuilders] = useState<any[]>([]);
   const [localServices, setLocalServices] = useState<any[]>([]);
+  const [localCategories, setLocalCategories] = useState<any[]>([]);
 
   // Track deleted IDs to perform delete queries on Save
   const [deletedProjects, setDeletedProjects] = useState<string[]>([]);
   const [deletedBuilders, setDeletedBuilders] = useState<string[]>([]);
   const [deletedServices, setDeletedServices] = useState<string[]>([]);
+  const [deletedCategories, setDeletedCategories] = useState<string[]>([]);
 
   // Cell editing state: { rowIndex, field }
   const [editingCell, setEditingCell] = useState<{ rowIndex: number; field: string } | null>(null);
@@ -57,7 +60,6 @@ function AdminDashboard() {
   // Sync state when DB data finishes loading
   useEffect(() => {
     if (projectsData) {
-      // Map frontend camelCase projects to db snake_case local state
       setLocalProjects(
         projectsData.map((p, idx) => ({
           id: (p as any).id || `temp-p-${idx}`,
@@ -75,7 +77,6 @@ function AdminDashboard() {
 
   useEffect(() => {
     if (buildersData) {
-      // Map builders to db fields
       setLocalBuilders(
         buildersData.map((b, idx) => ({
           id: (b as any).id || `temp-b-${idx}`,
@@ -110,15 +111,23 @@ function AdminDashboard() {
     }
   }, [servicesData]);
 
+  useEffect(() => {
+    if (categoriesData) {
+      setLocalCategories(
+        categoriesData.map((c, idx) => ({
+          id: c.id || `temp-c-${idx}`,
+          name: c.name,
+        }))
+      );
+    }
+  }, [categoriesData]);
+
   // Dropdown list constant values
-  const TEAM_CATEGORIES = ["Fullstack", "Frontend", "Backend", "AI", "DevOps", "Mobile", "Design"];
   const LUCIDE_ICONS = ["Globe", "Server", "Bot", "TestTube", "Workflow", "Palette", "Terminal", "Cpu", "Layers"];
 
   // ================= CELL EDITING ACTIONS =================
 
   const handleCellClick = (rowIndex: number, field: string) => {
-    // Array fields or image fields can be edited in specialized ways,
-    // but we can open editing mode for standard inputs
     setEditingCell({ rowIndex, field });
   };
 
@@ -135,6 +144,10 @@ function AdminDashboard() {
       const updated = [...localServices];
       updated[rowIndex][field] = value;
       setLocalServices(updated);
+    } else if (activeTab === "categories") {
+      const updated = [...localCategories];
+      updated[rowIndex][field] = value;
+      setLocalCategories(updated);
     }
   };
 
@@ -168,13 +181,14 @@ function AdminDashboard() {
       ]);
       toast.info("Added empty row to projects grid");
     } else if (activeTab === "builders") {
+      const firstCat = localCategories.length > 0 ? localCategories[0].name : "Fullstack";
       setLocalBuilders([
         ...localBuilders,
         {
           id: tempId,
           name: "New Builder",
           role: "Engineer",
-          category: "Fullstack",
+          category: firstCat,
           github: "",
           hue: Math.floor(Math.random() * 360),
           tagline: "Ready to ship.",
@@ -199,6 +213,15 @@ function AdminDashboard() {
         },
       ]);
       toast.info("Added empty row to services grid");
+    } else if (activeTab === "categories") {
+      setLocalCategories([
+        ...localCategories,
+        {
+          id: tempId,
+          name: "New Category",
+        },
+      ]);
+      toast.info("Added empty row to categories grid");
     }
   };
 
@@ -224,6 +247,13 @@ function AdminDashboard() {
       }
       setLocalServices(localServices.filter((_, idx) => idx !== rowIndex));
       toast.warning("Row removed from services buffer");
+    } else if (activeTab === "categories") {
+      const row = localCategories[rowIndex];
+      if (!row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
+        setDeletedCategories([...deletedCategories, row.id]);
+      }
+      setLocalCategories(localCategories.filter((_, idx) => idx !== rowIndex));
+      toast.warning("Row removed from categories buffer");
     }
   };
 
@@ -254,13 +284,11 @@ function AdminDashboard() {
     const uploadToast = toast.loading(`Uploading ${file.name} to storage bucket...`);
 
     try {
-      // 1. Create a clean unique filename
       const fileExt = file.name.split(".").pop();
       const cleanFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `portfolio/${cleanFileName}`;
 
-      // 2. Upload file to portfolio-images bucket
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("portfolio-images")
         .upload(filePath, file, {
           cacheControl: "3600",
@@ -271,14 +299,12 @@ function AdminDashboard() {
         throw uploadError;
       }
 
-      // 3. Get Public URL
       const { data: urlData } = supabase.storage
         .from("portfolio-images")
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
 
-      // 4. Update the cell value in local state
       handleCellChange(publicUrl, rowIndex, field);
 
       toast.success("Image uploaded to Storage!", { id: uploadToast });
@@ -305,13 +331,11 @@ function AdminDashboard() {
     try {
       // 1. Projects Saving
       if (activeTab === "projects") {
-        // Deletes
         if (deletedProjects.length > 0) {
           const { error } = await supabase.from("projects").delete().in("id", deletedProjects);
           if (error) throw error;
         }
 
-        // Upserts (Inserts / Updates)
         const upsertRows = localProjects.map((p) => {
           const item: any = {
             title: p.title,
@@ -322,7 +346,6 @@ function AdminDashboard() {
             accent: p.accent,
             logo_url: p.logo_url,
           };
-          // Preserve database UUID if it already exists, exclude temporary IDs
           if (!p.id.startsWith("new-") && !p.id.startsWith("temp-")) {
             item.id = p.id;
           }
@@ -404,10 +427,36 @@ function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ["services"] });
       }
 
+      // 4. Categories Saving
+      if (activeTab === "categories") {
+        if (deletedCategories.length > 0) {
+          const { error } = await supabase.from("categories").delete().in("id", deletedCategories);
+          if (error) throw error;
+        }
+
+        const upsertRows = localCategories.map((c) => {
+          const item: any = {
+            name: c.name,
+          };
+          if (!c.id.startsWith("new-") && !c.id.startsWith("temp-")) {
+            item.id = c.id;
+          }
+          return item;
+        });
+
+        if (upsertRows.length > 0) {
+          const { error } = await supabase.from("categories").upsert(upsertRows);
+          if (error) throw error;
+        }
+
+        setDeletedCategories([]);
+        queryClient.invalidateQueries({ queryKey: ["categories"] });
+      }
+
       toast.success("Database synced successfully!", { id: saveToast });
     } catch (err: any) {
       console.error("Save failure:", err);
-      toast.error(`Database error: ${err.message || "Operation failed"}. Make sure your Postgres tables exist! Check the 'SQL Setup' tab.`, { id: saveToast, duration: 6000 });
+      toast.error(`Database error: ${err.message || "Operation failed"}. Make sure your SQL setup is up-to-date! Check the 'SQL Setup' tab.`, { id: saveToast, duration: 6000 });
     } finally {
       setIsSaving(false);
     }
@@ -430,7 +479,20 @@ function AdminDashboard() {
     const seedToast = toast.loading("Seeding starting tables to Supabase...");
 
     try {
-      // 1. Seed Projects
+      // 1. Seed Categories first
+      const categoryRows = [
+        { name: "Frontend" },
+        { name: "Backend" },
+        { name: "Fullstack" },
+        { name: "AI" },
+        { name: "DevOps" },
+        { name: "Mobile" },
+        { name: "Design" },
+      ];
+      const { error: cErr } = await supabase.from("categories").upsert(categoryRows, { onConflict: "name" });
+      if (cErr) throw cErr;
+
+      // 2. Seed Projects
       const projectRows = mockProjects.map((p) => ({
         title: p.title,
         description: p.description,
@@ -438,12 +500,12 @@ function AdminDashboard() {
         repo_url: p.repoUrl,
         live_url: p.liveUrl,
         accent: p.accent,
-        logo_url: "", // Local static imports are blank URL on db, can be uploaded in UI
+        logo_url: "",
       }));
       const { error: pErr } = await supabase.from("projects").upsert(projectRows);
       if (pErr) throw pErr;
 
-      // 2. Seed Builders
+      // 3. Seed Builders
       const builderRows = mockBuilders.map((b) => ({
         name: b.name,
         role: b.role,
@@ -464,10 +526,10 @@ function AdminDashboard() {
 
       toast.success("Database populated with mock data!", { id: seedToast });
       
-      // Invalidate queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["builders"] });
       queryClient.invalidateQueries({ queryKey: ["services"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     } catch (err: any) {
       console.error("Seeding failed:", err);
       toast.error(`Database seeding failed: ${err.message}. Ensure you have created the tables in Supabase SQL editor! Check the 'SQL Setup' tab.`, { id: seedToast, duration: 6000 });
@@ -476,8 +538,15 @@ function AdminDashboard() {
     }
   };
 
-  // SQL Script text to copy
-  const sqlScript = `-- 1. CREATE PROJECTS TABLE
+  // master SQL Script
+  const sqlScript = `-- 1. CREATE CATEGORIES TABLE
+CREATE TABLE IF NOT EXISTS public.categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. CREATE PROJECTS TABLE
 CREATE TABLE IF NOT EXISTS public.projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -490,7 +559,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. CREATE BUILDERS TABLE (TEAM)
+-- 3. CREATE BUILDERS TABLE (TEAM)
 CREATE TABLE IF NOT EXISTS public.builders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
@@ -510,7 +579,7 @@ CREATE TABLE IF NOT EXISTS public.builders (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. CREATE SERVICES TABLE
+-- 4. CREATE SERVICES TABLE
 CREATE TABLE IF NOT EXISTS public.services (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -519,23 +588,25 @@ CREATE TABLE IF NOT EXISTS public.services (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. ENABLE ROW LEVEL SECURITY (RLS) FOR ALL TABLES
+-- 5. ENABLE ROW LEVEL SECURITY (RLS) FOR ALL TABLES
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.builders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
 
--- 5. CREATE READ POLICIES (Allow public select)
+-- 6. CREATE READ POLICIES (Allow public select)
+CREATE POLICY "Allow public read categories" ON public.categories FOR SELECT USING (true);
 CREATE POLICY "Allow public read projects" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Allow public read builders" ON public.builders FOR SELECT USING (true);
 CREATE POLICY "Allow public read services" ON public.services FOR SELECT USING (true);
 
--- 6. CREATE WRITE POLICIES (Allow all anonymous operations for easy admin panel control)
+-- 7. CREATE WRITE POLICIES (Allow all anonymous operations for easy admin panel control)
+CREATE POLICY "Allow all actions categories" ON public.categories FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all actions projects" ON public.projects FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all actions builders" ON public.builders FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all actions services" ON public.services FOR ALL USING (true) WITH CHECK (true);
 
--- 7. SETUP STORAGE BUCKETS FOR IMAGES
--- (Supabase standard policy setup for file uploading)
+-- 8. SETUP STORAGE BUCKETS FOR IMAGES
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('portfolio-images', 'portfolio-images', true) 
 ON CONFLICT DO NOTHING;
@@ -555,7 +626,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
 
   return (
     <div className="min-h-screen bg-[oklch(0.08_0.005_260)] text-foreground pt-12 pb-24">
-      {/* Top Banner and Navigation */}
       <div className="mx-auto max-w-7xl px-5">
         <div className="flex items-center justify-between border-b border-border/80 pb-6 mb-8">
           <div className="flex items-center gap-3">
@@ -576,7 +646,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Database indicator */}
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-[10px] uppercase tracking-wider ${
               isSupabaseConfigured
                 ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
@@ -588,7 +657,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
           </div>
         </div>
 
-        {/* ONBOARDING ALERT */}
         {!isSupabaseConfigured && (
           <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-5 mb-8 flex flex-col md:flex-row items-start gap-4">
             <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg shrink-0">
@@ -604,10 +672,9 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
           </div>
         )}
 
-        {/* Control toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-card/40 border border-border p-4 rounded-xl backdrop-blur-xl">
           {/* Tab Selection */}
-          <div className="flex bg-white/5 border border-border p-1 rounded-lg">
+          <div className="flex bg-white/5 border border-border p-1 rounded-lg flex-wrap gap-1">
             <button
               onClick={() => setActiveTab("projects")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
@@ -633,6 +700,14 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
               <FileSpreadsheet className="size-3.5" /> Services
             </button>
             <button
+              onClick={() => setActiveTab("categories")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
+                activeTab === "categories" ? "bg-neon text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <FileSpreadsheet className="size-3.5" /> Categories
+            </button>
+            <button
               onClick={() => setActiveTab("sql-setup")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
                 activeTab === "sql-setup" ? "bg-cyan text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
@@ -642,7 +717,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
             </button>
           </div>
 
-          {/* Action Buttons */}
           {activeTab !== "sql-setup" && (
             <div className="flex items-center gap-2">
               <button
@@ -673,7 +747,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
           )}
         </div>
 
-        {/* FILE INPUT ELEMENT FOR STORAGE UPLOADS */}
         <input
           type="file"
           ref={fileInputRef}
@@ -682,10 +755,8 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
           className="hidden"
         />
 
-        {/* GRID DISPLAY CARD */}
         <div className="border border-border/80 bg-[oklch(0.12_0.01_260)] rounded-2xl overflow-hidden shadow-2xl">
           {activeTab === "sql-setup" ? (
-            /* Setup Guide & SQL Block */
             <div className="p-6 md:p-8">
               <h2 className="text-lg font-mono font-semibold flex items-center gap-2 mb-4">
                 <Code className="text-cyan size-5" /> Supabase Database & Storage Setup Instructions
@@ -718,7 +789,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
               </div>
             </div>
           ) : (
-            /* EXCEL GRID TABLE DISPLAY */
             <div className="overflow-x-auto max-w-full">
               {activeTab === "projects" && (
                 <table className="w-full border-collapse font-mono text-[12.5px] leading-5">
@@ -745,12 +815,10 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                     ) : (
                       localProjects.map((row, idx) => (
                         <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
-                          {/* 1. Row index */}
                           <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
                             {idx + 1}
                           </td>
 
-                          {/* 2. Project Title */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => handleCellClick(idx, "title")}
@@ -769,7 +837,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* 3. Description */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-xs"
                             onClick={() => handleCellClick(idx, "description")}
@@ -787,7 +854,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* 4. Tech stack (Array) */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => handleCellClick(idx, "stack")}
@@ -817,7 +883,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* 5. Logo preview / upload */}
                           <td className="p-3 border-r border-border/30 select-none">
                             <div className="flex items-center gap-2">
                               {row.logo_url ? (
@@ -837,7 +902,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             </div>
                           </td>
 
-                          {/* 6. Repository URL */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-[150px]"
                             onClick={() => handleCellClick(idx, "repo_url")}
@@ -856,7 +920,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* 7. Live URL */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-[150px]"
                             onClick={() => handleCellClick(idx, "live_url")}
@@ -875,7 +938,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* 8. Accent Color */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => handleCellClick(idx, "accent")}
@@ -897,7 +959,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* 9. Delete action */}
                           <td className="p-3 text-center">
                             <button
                               onClick={() => deleteRow(idx)}
@@ -949,7 +1010,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             {idx + 1}
                           </td>
 
-                          {/* Name */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => handleCellClick(idx, "name")}
@@ -968,7 +1028,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Role */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => handleCellClick(idx, "role")}
@@ -987,22 +1046,21 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Category (Dropdown select) */}
+                          {/* Category (DYNAMIC DROPDOWN from Categories table!) */}
                           <td className="p-3 border-r border-border/30">
                             <select
                               value={row.category || "Fullstack"}
                               onChange={(e) => handleCellChange(e.target.value, idx, "category")}
-                              className="w-full bg-black/60 border border-border/40 px-1.5 py-1 rounded text-foreground outline-none cursor-pointer"
+                              className="w-full bg-black/60 border border-border/40 px-1.5 py-1 text-xs rounded text-foreground outline-none cursor-pointer font-mono"
                             >
-                              {TEAM_CATEGORIES.map((cat) => (
-                                <option key={cat} value={cat} className="bg-[oklch(0.12_0.01_260)] text-foreground">
-                                  {cat}
+                              {localCategories.map((cat) => (
+                                <option key={cat.id} value={cat.name} className="bg-[oklch(0.12_0.01_260)] text-foreground">
+                                  {cat.name}
                                 </option>
                               ))}
                             </select>
                           </td>
 
-                          {/* Avatar / Upload */}
                           <td className="p-3 border-r border-border/30 select-none">
                             <div className="flex items-center gap-2">
                               {row.avatar_url ? (
@@ -1028,7 +1086,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             </div>
                           </td>
 
-                          {/* Hue */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 text-center"
                             onClick={() => handleCellClick(idx, "hue")}
@@ -1050,7 +1107,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Tagline */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-xs truncate"
                             onClick={() => handleCellClick(idx, "tagline")}
@@ -1069,7 +1125,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Location */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => handleCellClick(idx, "location")}
@@ -1088,7 +1143,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Years Experience */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 text-center"
                             onClick={() => handleCellClick(idx, "years_exp")}
@@ -1110,7 +1164,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Bio */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-xs"
                             onClick={() => handleCellClick(idx, "bio")}
@@ -1128,7 +1181,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Skills Array */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => handleCellClick(idx, "skills")}
@@ -1158,7 +1210,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Fun Fact */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-xs truncate"
                             onClick={() => handleCellClick(idx, "fun_fact")}
@@ -1177,7 +1228,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Github */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
                             onClick={() => handleCellClick(idx, "github")}
@@ -1196,7 +1246,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Email */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
                             onClick={() => handleCellClick(idx, "email")}
@@ -1216,7 +1265,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Website */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
                             onClick={() => handleCellClick(idx, "website")}
@@ -1275,7 +1323,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             {idx + 1}
                           </td>
 
-                          {/* Title */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => handleCellClick(idx, "title")}
@@ -1294,7 +1341,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Description */}
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-sm"
                             onClick={() => handleCellClick(idx, "description")}
@@ -1312,7 +1358,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Icon selection dropdown */}
                           <td className="p-3 border-r border-border/30">
                             <select
                               value={row.icon || "Terminal"}
@@ -1325,6 +1370,62 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                                 </option>
                               ))}
                             </select>
+                          </td>
+
+                          <td className="p-3 text-center">
+                            <button
+                              onClick={() => deleteRow(idx)}
+                              className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
+
+              {activeTab === "categories" && (
+                <table className="w-full border-collapse font-mono text-[12.5px] leading-5">
+                  <thead>
+                    <tr className="bg-card border-b border-border/80 text-muted-foreground text-left select-none">
+                      <th className="p-3 border-r border-border/40 w-12 text-center">No.</th>
+                      <th className="p-3 border-r border-border/40 w-96">Category Name (Discipline)</th>
+                      <th className="p-3 w-16 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {localCategories.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="p-8 text-center text-muted-foreground select-none">
+                          No categories. Click "Add Row" or "Import Defaults" to populate the grid.
+                        </td>
+                      </tr>
+                    ) : (
+                      localCategories.map((row, idx) => (
+                        <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
+                          <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
+                            {idx + 1}
+                          </td>
+
+                          <td 
+                            className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
+                            onClick={() => handleCellClick(idx, "name")}
+                          >
+                            {editingCell?.rowIndex === idx && editingCell?.field === "name" ? (
+                              <input
+                                autoFocus
+                                value={row.name || ""}
+                                onChange={(e) => handleCellChange(e.target.value, idx, "name")}
+                                onBlur={handleCellBlur}
+                                onKeyDown={handleKeyPress}
+                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
+                              />
+                            ) : (
+                              row.name || <span className="text-muted-foreground/40 italic">Empty</span>
+                            )}
                           </td>
 
                           <td className="p-3 text-center">
