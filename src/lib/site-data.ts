@@ -81,3 +81,33 @@ export const services = [
     icon: "Palette",
   },
 ];
+
+export interface Achievement {
+  id?: string;
+  metric: string;
+  title: string;
+  description: string;
+}
+
+export const achievements: Achievement[] = [
+  {
+    metric: "10+",
+    title: "Projects Delivered",
+    description: "Successfully shipped production applications.",
+  },
+  {
+    metric: "99.9%",
+    title: "Uptime Guaranteed",
+    description: "Observed across all scalable systems.",
+  },
+  {
+    metric: "200ms",
+    title: "Avg Latency",
+    description: "For p95 API response standards.",
+  },
+  {
+    metric: "5+",
+    title: "Hackathon Awards",
+    description: "Won in engineering competitions.",
+  },
+];

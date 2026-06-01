@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { projects as mockProjects, services as mockServices, Project } from "@/lib/site-data";
+import { projects as mockProjects, services as mockServices, Project, achievements as mockAchievements, Achievement } from "@/lib/site-data";
 import { builders as mockBuilders, Builder } from "@/lib/team-data";
 
 // Helper to map Supabase database projects (snake_case) to client Project types (camelCase)
@@ -197,6 +197,42 @@ export function useCategories() {
       } catch (err) {
         console.warn("Failed to reach Supabase database for categories. Falling back to mock data.", err);
         return mockCategories;
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// 5. Achievements Hook
+export function useAchievements() {
+  return useQuery<Achievement[]>({
+    queryKey: ["achievements"],
+    queryFn: async () => {
+      if (!isSupabaseConfigured) {
+        console.warn("Supabase is not configured. Falling back to mock achievements.");
+        return mockAchievements;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("achievements")
+          .select("*")
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.warn("Error fetching achievements, falling back to mock achievements:", error.message);
+          return mockAchievements;
+        }
+
+        if (!data || data.length === 0) {
+          console.info("Achievements database table is empty. Showing mock achievements.");
+          return mockAchievements;
+        }
+
+        return data as Achievement[];
+      } catch (err) {
+        console.warn("Failed to reach Supabase database for achievements. Falling back to mock data.", err);
+        return mockAchievements;
       }
     },
     staleTime: 1000 * 60 * 5,

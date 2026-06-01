@@ -6,8 +6,8 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { useProjects, useBuilders, useServices, useCategories } from "@/hooks/useSupabaseData";
-import { projects as mockProjects } from "@/lib/site-data";
+import { useProjects, useBuilders, useServices, useCategories, useAchievements } from "@/hooks/useSupabaseData";
+import { projects as mockProjects, achievements as mockAchievements } from "@/lib/site-data";
 import { builders as mockBuilders } from "@/lib/team-data";
 import { toast } from "sonner";
 
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
 });
 
-type Tab = "projects" | "builders" | "services" | "categories" | "sql-setup";
+type Tab = "projects" | "builders" | "services" | "categories" | "sql-setup" | "achievements";
 
 function AdminDashboard() {
   const queryClient = useQueryClient();
@@ -38,18 +38,21 @@ function AdminDashboard() {
   const { data: buildersData } = useBuilders();
   const { data: servicesData } = useServices();
   const { data: categoriesData } = useCategories();
+  const { data: achievementsData } = useAchievements();
 
   // Local grid states (draft values of Excel table before saving)
   const [localProjects, setLocalProjects] = useState<any[]>([]);
   const [localBuilders, setLocalBuilders] = useState<any[]>([]);
   const [localServices, setLocalServices] = useState<any[]>([]);
   const [localCategories, setLocalCategories] = useState<any[]>([]);
+  const [localAchievements, setLocalAchievements] = useState<any[]>([]);
 
   // Track deleted IDs to perform delete queries on Save
   const [deletedProjects, setDeletedProjects] = useState<string[]>([]);
   const [deletedBuilders, setDeletedBuilders] = useState<string[]>([]);
   const [deletedServices, setDeletedServices] = useState<string[]>([]);
   const [deletedCategories, setDeletedCategories] = useState<string[]>([]);
+  const [deletedAchievements, setDeletedAchievements] = useState<string[]>([]);
 
   // Cell editing state: { rowIndex, field }
   const [editingCell, setEditingCell] = useState<{ rowIndex: number; field: string } | null>(null);
@@ -134,6 +137,19 @@ function AdminDashboard() {
     }
   }, [categoriesData]);
 
+  useEffect(() => {
+    if (achievementsData) {
+      setLocalAchievements(
+        achievementsData.map((a, idx) => ({
+          id: a.id || `temp-a-${idx}`,
+          metric: a.metric,
+          title: a.title,
+          description: a.description,
+        }))
+      );
+    }
+  }, [achievementsData]);
+
   const LUCIDE_ICONS = ["Globe", "Server", "Bot", "TestTube", "Workflow", "Palette", "Terminal", "Cpu", "Layers"];
 
   // ================= PASSWORD GATE SUBMIT =================
@@ -210,6 +226,10 @@ function AdminDashboard() {
       const updated = [...localCategories];
       updated[rowIndex][field] = value;
       setLocalCategories(updated);
+    } else if (activeTab === "achievements") {
+      const updated = [...localAchievements];
+      updated[rowIndex][field] = value;
+      setLocalAchievements(updated);
     }
   };
 
@@ -284,6 +304,17 @@ function AdminDashboard() {
         },
       ]);
       toast.info("Added empty row to categories grid");
+    } else if (activeTab === "achievements") {
+      setLocalAchievements([
+        ...localAchievements,
+        {
+          id: tempId,
+          metric: "0+",
+          title: "New Achievement",
+          description: "Describe this milestone.",
+        },
+      ]);
+      toast.info("Added empty row to achievements grid");
     }
   };
 
@@ -316,6 +347,13 @@ function AdminDashboard() {
       }
       setLocalCategories(localCategories.filter((_, idx) => idx !== rowIndex));
       toast.warning("Row removed from categories buffer");
+    } else if (activeTab === "achievements") {
+      const row = localAchievements[rowIndex];
+      if (!row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
+        setDeletedAchievements([...deletedAchievements, row.id]);
+      }
+      setLocalAchievements(localAchievements.filter((_, idx) => idx !== rowIndex));
+      toast.warning("Row removed from achievements buffer");
     }
   };
 
@@ -515,6 +553,34 @@ function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ["categories"] });
       }
 
+      // 5. Achievements Saving
+      if (activeTab === "achievements") {
+        if (deletedAchievements.length > 0) {
+          const { error } = await supabase.from("achievements").delete().in("id", deletedAchievements);
+          if (error) throw error;
+        }
+
+        const upsertRows = localAchievements.map((a) => {
+          const item: any = {
+            metric: a.metric,
+            title: a.title,
+            description: a.description,
+          };
+          if (!a.id.startsWith("new-") && !a.id.startsWith("temp-")) {
+            item.id = a.id;
+          }
+          return item;
+        });
+
+        if (upsertRows.length > 0) {
+          const { error } = await supabase.from("achievements").upsert(upsertRows);
+          if (error) throw error;
+        }
+
+        setDeletedAchievements([]);
+        queryClient.invalidateQueries({ queryKey: ["achievements"] });
+      }
+
       toast.success("Database synced successfully!", { id: saveToast });
     } catch (err: any) {
       console.error("Save failure:", err);
@@ -586,12 +652,22 @@ function AdminDashboard() {
       const { error: bErr } = await supabase.from("builders").upsert(builderRows);
       if (bErr) throw bErr;
 
+      // 4. Seed Achievements
+      const achievementRows = mockAchievements.map((a) => ({
+        metric: a.metric,
+        title: a.title,
+        description: a.description,
+      }));
+      const { error: aErr } = await supabase.from("achievements").upsert(achievementRows);
+      if (aErr) throw aErr;
+
       toast.success("Database populated with mock data!", { id: seedToast });
       
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["builders"] });
       queryClient.invalidateQueries({ queryKey: ["services"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["achievements"] });
     } catch (err: any) {
       console.error("Seeding failed:", err);
       toast.error(`Database seeding failed: ${err.message}. Ensure you have created the tables in Supabase SQL editor! Check the 'SQL Setup' tab.`, { id: seedToast, duration: 6000 });
@@ -650,22 +726,34 @@ CREATE TABLE IF NOT EXISTS public.services (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- CREATE ACHIEVEMENTS TABLE
+CREATE TABLE IF NOT EXISTS public.achievements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    metric TEXT,
+    title TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 5. ENABLE ROW LEVEL SECURITY (RLS) FOR ALL TABLES
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.builders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
 
 -- 6. DROP POLICIES IF THEY ALREADY EXIST (To prevent duplicate object errors)
 DROP POLICY IF EXISTS "Allow public read categories" ON public.categories;
 DROP POLICY IF EXISTS "Allow public read projects" ON public.projects;
 DROP POLICY IF EXISTS "Allow public read builders" ON public.builders;
 DROP POLICY IF EXISTS "Allow public read services" ON public.services;
+DROP POLICY IF EXISTS "Allow public read achievements" ON public.achievements;
 
 DROP POLICY IF EXISTS "Allow secure write categories" ON public.categories;
 DROP POLICY IF EXISTS "Allow secure write projects" ON public.projects;
 DROP POLICY IF EXISTS "Allow secure write builders" ON public.builders;
 DROP POLICY IF EXISTS "Allow secure write services" ON public.services;
+DROP POLICY IF EXISTS "Allow secure write achievements" ON public.achievements;
 
 DROP POLICY IF EXISTS "Allow all actions categories" ON public.categories;
 DROP POLICY IF EXISTS "Allow all actions projects" ON public.projects;
@@ -677,6 +765,7 @@ CREATE POLICY "Allow public read categories" ON public.categories FOR SELECT USI
 CREATE POLICY "Allow public read projects" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Allow public read builders" ON public.builders FOR SELECT USING (true);
 CREATE POLICY "Allow public read services" ON public.services FOR SELECT USING (true);
+CREATE POLICY "Allow public read achievements" ON public.achievements FOR SELECT USING (true);
 
 -- 8. CREATE SERVER-SIDE PASSWORD VERIFICATION FUNCTION (Pentest-Proof)
 -- Custom Postgres function running on the server side so the key is never exposed to the client!
@@ -708,6 +797,10 @@ FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 
 WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
 
 CREATE POLICY "Allow secure write services" ON public.services 
+FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
+WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+
+CREATE POLICY "Allow secure write achievements" ON public.achievements 
 FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
 WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
 
@@ -910,6 +1003,14 @@ FOR DELETE USING (
               }`}
             >
               <FileSpreadsheet className="size-3.5" /> Categories
+            </button>
+            <button
+              onClick={() => setActiveTab("achievements")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
+                activeTab === "achievements" ? "bg-neon text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <FileSpreadsheet className="size-3.5" /> Achievements
             </button>
           </div>
 
@@ -1612,6 +1713,99 @@ FOR DELETE USING (
                               />
                             ) : (
                               row.name || <span className="text-muted-foreground/40 italic">Empty</span>
+                            )}
+                          </td>
+
+                          <td className="p-3 text-center">
+                            <button
+                              onClick={() => deleteRow(idx)}
+                              className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
+
+              {activeTab === "achievements" && (
+                <table className="w-full border-collapse font-mono text-[12.5px] leading-5">
+                  <thead>
+                    <tr className="bg-card border-b border-border/80 text-muted-foreground text-left select-none">
+                      <th className="p-3 border-r border-border/40 w-12 text-center">No.</th>
+                      <th className="p-3 border-r border-border/40 w-32">Metric</th>
+                      <th className="p-3 border-r border-border/40 w-64">Title</th>
+                      <th className="p-3 border-r border-border/40 w-96">Description</th>
+                      <th className="p-3 w-16 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {localAchievements.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-muted-foreground select-none">
+                          No achievements. Click "Add Row" or "Import Defaults" to populate the grid.
+                        </td>
+                      </tr>
+                    ) : (
+                      localAchievements.map((row, idx) => (
+                        <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
+                          <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
+                            {idx + 1}
+                          </td>
+
+                          <td 
+                            className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold text-cyan"
+                            onClick={() => handleCellClick(idx, "metric")}
+                          >
+                            {editingCell?.rowIndex === idx && editingCell?.field === "metric" ? (
+                              <input
+                                autoFocus
+                                value={row.metric || ""}
+                                onChange={(e) => handleCellChange(e.target.value, idx, "metric")}
+                                onBlur={handleCellBlur}
+                                onKeyDown={handleKeyPress}
+                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
+                              />
+                            ) : (
+                              row.metric || <span className="text-muted-foreground/40 italic">Empty</span>
+                            )}
+                          </td>
+
+                          <td 
+                            className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
+                            onClick={() => handleCellClick(idx, "title")}
+                          >
+                            {editingCell?.rowIndex === idx && editingCell?.field === "title" ? (
+                              <input
+                                autoFocus
+                                value={row.title || ""}
+                                onChange={(e) => handleCellChange(e.target.value, idx, "title")}
+                                onBlur={handleCellBlur}
+                                onKeyDown={handleKeyPress}
+                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
+                              />
+                            ) : (
+                              row.title || <span className="text-muted-foreground/40 italic">Empty</span>
+                            )}
+                          </td>
+
+                          <td 
+                            className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-sm"
+                            onClick={() => handleCellClick(idx, "description")}
+                          >
+                            {editingCell?.rowIndex === idx && editingCell?.field === "description" ? (
+                              <textarea
+                                autoFocus
+                                value={row.description || ""}
+                                onChange={(e) => handleCellChange(e.target.value, idx, "description")}
+                                onBlur={handleCellBlur}
+                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none min-h-[60px]"
+                              />
+                            ) : (
+                              row.description || <span className="text-muted-foreground/40 italic">Empty</span>
                             )}
                           </td>
 
