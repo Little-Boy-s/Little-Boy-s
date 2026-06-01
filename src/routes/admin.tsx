@@ -78,6 +78,20 @@ function AdminDashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        setIsModalOpen(false);
+        setEditingRowIndex(null);
+        setModalDraft(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isModalOpen]);
+
   // Sync state when DB data finishes loading
   useEffect(() => {
     if (projectsData) {
@@ -1693,7 +1707,16 @@ FOR DELETE USING (
       </div>
 
       {isModalOpen && modalDraft && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-24 bg-black/80 backdrop-blur-md overflow-y-auto">
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsModalOpen(false);
+              setEditingRowIndex(null);
+              setModalDraft(null);
+            }
+          }}
+          className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-24 bg-black/80 backdrop-blur-md overflow-y-auto"
+        >
           {/* Modal Container */}
           <div className="relative w-full max-w-2xl bg-[#090b10] border border-border rounded-2xl shadow-2xl overflow-hidden font-mono flex flex-col my-8 max-h-[78vh]">
             
