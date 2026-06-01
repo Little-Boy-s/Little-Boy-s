@@ -28,3 +28,27 @@ export const supabase = createClient(
     }
   }
 );
+
+// Dynamic helper to update both REST and Storage headers since Supabase deep-copies options at init time
+export function setSupabaseAdminKey(key: string) {
+  if (!supabase) return;
+  
+  if ((supabase as any).rest?.headers) {
+    (supabase as any).rest.headers["x-admin-key"] = key;
+  }
+  
+  if ((supabase as any).storage?.headers) {
+    (supabase as any).storage.headers["x-admin-key"] = key;
+  }
+}
+
+// Auto-restore admin key from sessionStorage on initial load/refresh
+if (typeof window !== "undefined") {
+  const savedKey = sessionStorage.getItem("admin_key");
+  if (savedKey) {
+    // Run after initialization completes
+    setTimeout(() => {
+      setSupabaseAdminKey(savedKey);
+    }, 0);
+  }
+}
