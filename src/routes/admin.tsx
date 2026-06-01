@@ -970,29 +970,29 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 9. CREATE SECURE WRITE POLICIES (Checks custom HTTP header x-admin-key)
+-- 9. CREATE SECURE WRITE POLICIES (Checks custom HTTP header x-admin-key via verify_admin_key)
 -- Enforces that all INSERT, UPDATE, DELETE requests have the correct x-admin-key header value!
--- IMPORTANT: Replace 'your_secret_password' below with your chosen password!
+-- NOTE: Policies dynamically call public.verify_admin_key, so you ONLY need to update the password inside verify_admin_key above!
 
 CREATE POLICY "Allow secure write categories" ON public.categories 
-FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
-WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')) 
+WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
 
 CREATE POLICY "Allow secure write projects" ON public.projects 
-FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
-WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')) 
+WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
 
 CREATE POLICY "Allow secure write builders" ON public.builders 
-FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
-WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')) 
+WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
 
 CREATE POLICY "Allow secure write services" ON public.services 
-FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
-WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')) 
+WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
 
 CREATE POLICY "Allow secure write achievements" ON public.achievements 
-FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
-WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')) 
+WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
 
 -- 10. SETUP STORAGE BUCKETS FOR IMAGES
 INSERT INTO storage.buckets (id, name, public) 
@@ -1013,23 +1013,23 @@ CREATE POLICY "Public Read Objects" ON storage.objects
 FOR SELECT USING (bucket_id = 'portfolio-images');
 
 -- Storage Secure Write Policies (Requires x-admin-key custom header)
--- IMPORTANT: Replace 'your_secret_password' below with your chosen password!
+-- NOTE: Policies dynamically call public.verify_admin_key, so you ONLY need to update the password inside verify_admin_key above!
 CREATE POLICY "Secure Upload Objects" ON storage.objects 
 FOR INSERT WITH CHECK (
   bucket_id = 'portfolio-images' AND 
-  current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password'
+  public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')
 );
 
 CREATE POLICY "Secure Update Objects" ON storage.objects 
 FOR UPDATE USING (
   bucket_id = 'portfolio-images' AND 
-  current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password'
+  public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')
 );
 
 CREATE POLICY "Secure Delete Objects" ON storage.objects 
 FOR DELETE USING (
   bucket_id = 'portfolio-images' AND 
-  current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password'
+  public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')
 );
 `;
 
