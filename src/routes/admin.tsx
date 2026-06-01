@@ -138,22 +138,51 @@ function AdminDashboard() {
 
   // ================= PASSWORD GATE SUBMIT =================
 
-  const handleUnlockConsole = (e: React.FormEvent) => {
+  const handleUnlockConsole = async (e: React.FormEvent) => {
     e.preventDefault();
-    const systemPassword = (import.meta.env.VITE_ADMIN_PASSWORD as string) || "admin123";
 
-    if (passwordInput === systemPassword) {
-      sessionStorage.setItem("admin_unlocked", "true");
-      setIsUnlocked(true);
-      setPasswordInput("");
-      toast.success("Console unlocked. Welcome back, Administrator.");
-    } else {
-      toast.error("Invalid password. Access Denied.");
+    if (!isSupabaseConfigured) {
+      // Mock mode fallback check
+      if (passwordInput === "admin123") {
+        sessionStorage.setItem("admin_unlocked", "true");
+        sessionStorage.setItem("admin_key", "admin123");
+        setIsUnlocked(true);
+        setPasswordInput("");
+        toast.success("Console unlocked (Mock Mode). Welcome back, Administrator.");
+      } else {
+        toast.error("Invalid password. Access Denied.");
+      }
+      return;
+    }
+
+    const unlockToast = toast.loading("Verifying key securely with Postgres...");
+    try {
+      const { data: isValid, error } = await supabase.rpc("verify_admin_key", {
+        input_key: passwordInput,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (isValid) {
+        sessionStorage.setItem("admin_unlocked", "true");
+        sessionStorage.setItem("admin_key", passwordInput);
+        setIsUnlocked(true);
+        setPasswordInput("");
+        toast.success("Console unlocked. Welcome back, Administrator.", { id: unlockToast });
+      } else {
+        toast.error("Invalid password. Access Denied.", { id: unlockToast });
+      }
+    } catch (err: any) {
+      console.error("Verification failed:", err);
+      toast.error(`Authentication failed: ${err.message || "Failed to communicate with database"}. Make sure your SQL setup is up-to-date! Check the status or SQL setup.`, { id: unlockToast, duration: 6000 });
     }
   };
 
   const handleLockConsole = () => {
     sessionStorage.removeItem("admin_unlocked");
+    sessionStorage.removeItem("admin_key");
     setIsUnlocked(false);
     toast.warning("Console locked securely.");
   };
@@ -627,34 +656,98 @@ ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.builders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
 
--- 6. CREATE READ POLICIES (Allow public select)
+-- 6. DROP POLICIES IF THEY ALREADY EXIST (To prevent duplicate object errors)
+DROP POLICY IF EXISTS "Allow public read categories" ON public.categories;
+DROP POLICY IF EXISTS "Allow public read projects" ON public.projects;
+DROP POLICY IF EXISTS "Allow public read builders" ON public.builders;
+DROP POLICY IF EXISTS "Allow public read services" ON public.services;
+
+DROP POLICY IF EXISTS "Allow secure write categories" ON public.categories;
+DROP POLICY IF EXISTS "Allow secure write projects" ON public.projects;
+DROP POLICY IF EXISTS "Allow secure write builders" ON public.builders;
+DROP POLICY IF EXISTS "Allow secure write services" ON public.services;
+
+DROP POLICY IF EXISTS "Allow all actions categories" ON public.categories;
+DROP POLICY IF EXISTS "Allow all actions projects" ON public.projects;
+DROP POLICY IF EXISTS "Allow all actions builders" ON public.builders;
+DROP POLICY IF EXISTS "Allow all actions services" ON public.services;
+
+-- 7. CREATE READ POLICIES (Allow public select)
 CREATE POLICY "Allow public read categories" ON public.categories FOR SELECT USING (true);
 CREATE POLICY "Allow public read projects" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Allow public read builders" ON public.builders FOR SELECT USING (true);
 CREATE POLICY "Allow public read services" ON public.services FOR SELECT USING (true);
 
--- 7. CREATE WRITE POLICIES (Allow all anonymous operations for easy admin panel control)
-CREATE POLICY "Allow all actions categories" ON public.categories FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all actions projects" ON public.projects FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all actions builders" ON public.builders FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all actions services" ON public.services FOR ALL USING (true) WITH CHECK (true);
+-- 8. CREATE SERVER-SIDE PASSWORD VERIFICATION FUNCTION (Pentest-Proof)
+-- Custom Postgres function running on the server side so the key is never exposed to the client!
+-- IMPORTANT: Change 'your_secret_password' below to your desired secure password!
+CREATE OR REPLACE FUNCTION public.verify_admin_key(input_key text)
+RETURNS boolean AS $$
+DECLARE
+  correct_key text;
+BEGIN
+  correct_key := 'your_secret_password';
+  RETURN input_key = correct_key;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 8. SETUP STORAGE BUCKETS FOR IMAGES
+-- 9. CREATE SECURE WRITE POLICIES (Checks custom HTTP header x-admin-key)
+-- Enforces that all INSERT, UPDATE, DELETE requests have the correct x-admin-key header value!
+-- IMPORTANT: Replace 'your_secret_password' below with your chosen password!
+
+CREATE POLICY "Allow secure write categories" ON public.categories 
+FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
+WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+
+CREATE POLICY "Allow secure write projects" ON public.projects 
+FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
+WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+
+CREATE POLICY "Allow secure write builders" ON public.builders 
+FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
+WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+
+CREATE POLICY "Allow secure write services" ON public.services 
+FOR ALL USING (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password') 
+WITH CHECK (current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password');
+
+-- 10. SETUP STORAGE BUCKETS FOR IMAGES
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('portfolio-images', 'portfolio-images', true) 
 ON CONFLICT DO NOTHING;
 
+-- Storage Policies cleanup
+DROP POLICY IF EXISTS "Public Read Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Public Upload Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Public Update Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Public Delete Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Secure Upload Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Secure Update Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Secure Delete Objects" ON storage.objects;
+
+-- Storage Read Policy
 CREATE POLICY "Public Read Objects" ON storage.objects 
 FOR SELECT USING (bucket_id = 'portfolio-images');
 
-CREATE POLICY "Public Upload Objects" ON storage.objects 
-FOR INSERT WITH CHECK (bucket_id = 'portfolio-images');
+-- Storage Secure Write Policies (Requires x-admin-key custom header)
+-- IMPORTANT: Replace 'your_secret_password' below with your chosen password!
+CREATE POLICY "Secure Upload Objects" ON storage.objects 
+FOR INSERT WITH CHECK (
+  bucket_id = 'portfolio-images' AND 
+  current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password'
+);
 
-CREATE POLICY "Public Update Objects" ON storage.objects 
-FOR UPDATE USING (bucket_id = 'portfolio-images');
+CREATE POLICY "Secure Update Objects" ON storage.objects 
+FOR UPDATE USING (
+  bucket_id = 'portfolio-images' AND 
+  current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password'
+);
 
-CREATE POLICY "Public Delete Objects" ON storage.objects 
-FOR DELETE USING (bucket_id = 'portfolio-images');
+CREATE POLICY "Secure Delete Objects" ON storage.objects 
+FOR DELETE USING (
+  bucket_id = 'portfolio-images' AND 
+  current_setting('request.headers', true)::json->>'x-admin-key' = 'your_secret_password'
+);
 `;
 
   // ================= RENDER INTERFACE GATES =================
@@ -745,14 +838,18 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
           </div>
 
           <div className="flex items-center gap-3">
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-[10px] uppercase tracking-wider ${
-              isSupabaseConfigured
-                ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
-                : "bg-amber-950/40 border-amber-500/30 text-amber-400"
-            }`}>
+            <button
+              onClick={() => setActiveTab(activeTab === "sql-setup" ? "projects" : "sql-setup")}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-[10px] uppercase tracking-wider cursor-pointer hover:opacity-80 transition-all ${
+                isSupabaseConfigured
+                  ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
+                  : "bg-amber-950/40 border-amber-500/30 text-amber-400"
+              }`}
+              title="Click to toggle SQL Database Setup Instructions"
+            >
               <Database className="size-3" />
               {isSupabaseConfigured ? "Connected" : "Fallback Mode"}
-            </div>
+            </button>
 
             <button
               onClick={handleLockConsole}
