@@ -1721,7 +1721,6 @@ FOR DELETE USING (
             <div className="p-6 overflow-y-auto space-y-5 flex-1 select-none">
               {activeTab === "projects" && (
                 <div className="space-y-4 text-left">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Project Title</label>
                       <input 
@@ -1731,17 +1730,57 @@ FOR DELETE USING (
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">CSS Accent Gradient</label>
-                      <input 
-                        type="text" 
-                        value={modalDraft.accent || ""} 
-                        onChange={(e) => setModalDraft({ ...modalDraft, accent: e.target.value })}
-                        placeholder="linear-gradient(135deg, #00f2fe, #4facfe)"
-                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
-                      />
+
+                    <div className="bg-black/30 border border-border/60 p-4 rounded-xl space-y-3.5">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">CSS Accent Theme (Color or Gradient)</label>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={modalDraft.accent || ""} 
+                            onChange={(e) => setModalDraft({ ...modalDraft, accent: e.target.value })}
+                            placeholder="linear-gradient(135deg, #00f2fe, #4facfe)"
+                            className="flex-1 bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                          />
+                          {/* Solid Color Picker input */}
+                          <div className="relative size-9 rounded-lg border border-border bg-black/40 overflow-hidden flex items-center justify-center shrink-0 hover:border-cyan/40 transition-colors" title="Solid Color Picker">
+                            <input 
+                              type="color" 
+                              value={modalDraft.accent?.startsWith("#") && modalDraft.accent.length === 7 ? modalDraft.accent : "#00f2fe"} 
+                              onChange={(e) => setModalDraft({ ...modalDraft, accent: e.target.value })}
+                              className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Gradient Presets */}
+                      <div>
+                        <span className="block text-[9px] text-muted-foreground mb-2">Preset Cyber Gradients (Click to apply instantly):</span>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { name: "Cyan-Blue", gradient: "linear-gradient(135deg, #00f2fe, #4facfe)" },
+                            { name: "Magenta-Purple", gradient: "linear-gradient(135deg, #e100ff, #7f00ff)" },
+                            { name: "Pink-Violet", gradient: "linear-gradient(135deg, #f107a3, #7b2ff7)" },
+                            { name: "Teal-Emerald", gradient: "linear-gradient(135deg, #00b09b, #96c93d)" },
+                            { name: "Sunset Orange", gradient: "linear-gradient(135deg, #ff5f6d, #ffc371)" },
+                            { name: "Toxic Pink", gradient: "linear-gradient(135deg, #f857a6, #ff5858)" },
+                            { name: "Cyber Gold", gradient: "linear-gradient(135deg, #f59e0b, #d97706)" },
+                            { name: "Neon Lime", gradient: "linear-gradient(135deg, #11998e, #38ef7d)" },
+                            { name: "Crimson Blood", gradient: "linear-gradient(135deg, #ff0844, #ffb199)" }
+                          ].map((preset) => (
+                            <button
+                              key={preset.name}
+                              type="button"
+                              onClick={() => setModalDraft({ ...modalDraft, accent: preset.gradient })}
+                              className="size-7 rounded-lg border border-border/80 hover:scale-110 hover:border-white transition-all cursor-pointer shadow-md"
+                              style={{ background: preset.gradient }}
+                              title={preset.name}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
                   {/* Accent Preview Block */}
                   <div>
