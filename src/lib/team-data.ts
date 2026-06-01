@@ -16,6 +16,7 @@ export type Builder = {
   funFact: string;
   email?: string;
   website?: string;
+  avatarUrl?: string;
 };
 
 type Row = [string, string, TeamCategory, string, string, number, string, string[], string];
