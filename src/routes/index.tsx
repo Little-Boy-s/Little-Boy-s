@@ -8,7 +8,7 @@ import { TeamGrid } from "@/components/site/TeamGrid";
 import { Reveal } from "@/components/site/Reveal";
 import { TerminalTyping } from "@/components/site/TerminalTyping";
 import { expertise } from "@/lib/site-data";
-import { useProjects, useBuilders } from "@/hooks/useSupabaseData";
+import { useProjects, useBuilders, useAchievements } from "@/hooks/useSupabaseData";
 
 
 export const Route = createFileRoute("/")({
@@ -40,6 +40,7 @@ const COMMANDS = [
 function Home() {
   const { data: projects = [] } = useProjects();
   const { data: builders = [] } = useBuilders();
+  const { data: achievementsData = [] } = useAchievements();
 
   return (
     <>
@@ -195,11 +196,45 @@ function Home() {
         </Reveal>
       </section>
 
-      {/* ===== Stack & Sandbox — package.json style ===== */}
+      {/* ===== Achievements — dynamic statistics grid ===== */}
       <section className="mx-auto max-w-5xl px-5 py-20">
         <Reveal>
           <SectionHeading
             index="02"
+            eyebrow="cat ./achievements.log"
+            title="Our achievements & impact."
+            description="Milestones we have unlocked and metrics we consistently maintain."
+          />
+        </Reveal>
+
+        <Reveal delay={120}>
+          <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-5">
+            {achievementsData.map((stat, i) => (
+              <div
+                key={stat.title}
+                className="relative rounded-2xl border border-border bg-card/40 p-6 md:p-8 backdrop-blur-xl hover:border-cyan/50 hover:bg-white/5 transition-all text-center group"
+              >
+                <div className="absolute top-3 right-3 size-2 rounded-full bg-cyan/40 group-hover:bg-cyan group-hover:scale-125 transition-all" />
+                <h3 className="text-3xl md:text-4xl font-extrabold font-mono tracking-tight text-cyan">
+                  {stat.metric}
+                </h3>
+                <p className="mt-2 text-sm font-semibold font-mono uppercase tracking-wider text-foreground">
+                  {stat.title}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                  {stat.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ===== Stack & Sandbox — package.json style ===== */}
+      <section className="mx-auto max-w-5xl px-5 py-20">
+        <Reveal>
+          <SectionHeading
+            index="03"
             eyebrow="cat ./package.json"
             title="Our stack & sandbox."
             description="Dependencies we pull every day — chosen for boring reliability, then pushed hard."
@@ -272,7 +307,7 @@ function Home() {
         <div className="flex items-end justify-between flex-wrap gap-4">
           <Reveal>
             <SectionHeading
-              index="03"
+              index="04"
               eyebrow="featured projects"
               title="Some things we've shipped."
               description="From AI assistants to data labeling systems and battle-tested APIs."
@@ -300,7 +335,7 @@ function Home() {
       <section className="mx-auto max-w-6xl px-5 py-20">
         <Reveal>
           <SectionHeading
-            index="04"
+            index="05"
             eyebrow="meet the builders"
             title="The crew behind the code."
             description="A team of engineers, designers and AI folks shipping together. Hover any avatar to peek."
