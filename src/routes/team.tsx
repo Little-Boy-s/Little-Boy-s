@@ -30,7 +30,14 @@ function TeamPage() {
 
   const counts = categories.map((cat) => ({
     label: cat.name,
-    count: builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(cat.name)).length,
+    count: builders.filter(
+      (b) =>
+        b.category &&
+        b.category
+          .split(",")
+          .map((c) => c.trim())
+          .includes(cat.name),
+    ).length,
   }));
 
   return (
@@ -46,9 +53,8 @@ function TeamPage() {
             Meet the <span className="gradient-text">builders</span>.
           </h1>
           <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
-            {builders.length} engineers, designers and AI folks shipping
-            together. Filter by discipline · hover any avatar for name, role
-            and GitHub.
+            {builders.length} engineers, designers and AI folks shipping together. Filter by
+            discipline · hover any avatar for name, role and GitHub.
           </p>
         </Reveal>
       </section>
@@ -113,8 +119,8 @@ function TeamPage() {
               Want to ship with us?
             </h2>
             <p className="mt-3 text-muted-foreground max-w-xl">
-              Open roles in frontend, backend, AI pipelines and DevOps. Send
-              your GitHub — we read every PR history.
+              Open roles in frontend, backend, AI pipelines and DevOps. Send your GitHub — we read
+              every PR history.
             </p>
             <a
               href="#"

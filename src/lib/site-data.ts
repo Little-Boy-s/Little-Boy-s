@@ -43,10 +43,26 @@ export const expertise = [
 ];
 
 export const techStack = [
-  "React", "TypeScript", "Next.js", "TanStack", "Tailwind CSS",
-  "Spring Boot", "FastAPI", ".NET", "Node.js", "Python",
-  "PostgreSQL", "Redis", "Kafka", "Docker", "Kubernetes",
-  "GitHub Actions", "Terraform", "RAG", "LangChain", "Playwright",
+  "React",
+  "TypeScript",
+  "Next.js",
+  "TanStack",
+  "Tailwind CSS",
+  "Spring Boot",
+  "FastAPI",
+  ".NET",
+  "Node.js",
+  "Python",
+  "PostgreSQL",
+  "Redis",
+  "Kafka",
+  "Docker",
+  "Kubernetes",
+  "GitHub Actions",
+  "Terraform",
+  "RAG",
+  "LangChain",
+  "Playwright",
 ];
 
 export const services = [

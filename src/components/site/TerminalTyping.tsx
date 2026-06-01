@@ -11,12 +11,7 @@ type Props = {
  * Loops through `commands`, typing each char-by-char then erasing.
  * Renders inline: `> {typed}_`
  */
-export function TerminalTyping({
-  commands,
-  typingSpeed = 55,
-  holdMs = 1600,
-  className,
-}: Props) {
+export function TerminalTyping({ commands, typingSpeed = 55, holdMs = 1600, className }: Props) {
   const [i, setI] = useState(0);
   const [text, setText] = useState("");
   const [erasing, setErasing] = useState(false);
@@ -34,9 +29,7 @@ export function TerminalTyping({
     }
     const t = setTimeout(
       () => {
-        setText((prev) =>
-          erasing ? prev.slice(0, -1) : full.slice(0, prev.length + 1),
-        );
+        setText((prev) => (erasing ? prev.slice(0, -1) : full.slice(0, prev.length + 1)));
       },
       erasing ? Math.max(20, typingSpeed / 2) : typingSpeed,
     );
@@ -45,8 +38,7 @@ export function TerminalTyping({
 
   return (
     <span className={className}>
-      <span className="text-neon">$</span>{" "}
-      <span className="text-foreground">{text}</span>
+      <span className="text-neon">$</span> <span className="text-foreground">{text}</span>
       <span className="cursor-blink ml-0.5 text-neon" aria-hidden />
     </span>
   );
