@@ -145,6 +145,7 @@ function AdminDashboard() {
           metric: a.metric,
           title: a.title,
           description: a.description,
+          image_url: a.image_url || "",
         }))
       );
     }
@@ -312,6 +313,7 @@ function AdminDashboard() {
           metric: "0+",
           title: "New Achievement",
           description: "Describe this milestone.",
+          image_url: "",
         },
       ]);
       toast.info("Added empty row to achievements grid");
@@ -565,6 +567,7 @@ function AdminDashboard() {
             metric: a.metric,
             title: a.title,
             description: a.description,
+            image_url: a.image_url || "",
           };
           if (!a.id.startsWith("new-") && !a.id.startsWith("temp-")) {
             item.id = a.id;
@@ -657,6 +660,7 @@ function AdminDashboard() {
         metric: a.metric,
         title: a.title,
         description: a.description,
+        image_url: a.image_url || "",
       }));
       const { error: aErr } = await supabase.from("achievements").upsert(achievementRows);
       if (aErr) throw aErr;
@@ -1739,13 +1743,14 @@ FOR DELETE USING (
                       <th className="p-3 border-r border-border/40 w-32">Metric</th>
                       <th className="p-3 border-r border-border/40 w-64">Title</th>
                       <th className="p-3 border-r border-border/40 w-96">Description</th>
+                      <th className="p-3 border-r border-border/40 w-40">Certificate Image / Upload</th>
                       <th className="p-3 w-16 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {localAchievements.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-muted-foreground select-none">
+                        <td colSpan={6} className="p-8 text-center text-muted-foreground select-none">
                           No achievements. Click "Add Row" or "Import Defaults" to populate the grid.
                         </td>
                       </tr>
@@ -1807,6 +1812,25 @@ FOR DELETE USING (
                             ) : (
                               row.description || <span className="text-muted-foreground/40 italic">Empty</span>
                             )}
+                          </td>
+
+                          <td className="p-3 border-r border-border/30 select-none">
+                            <div className="flex items-center gap-2">
+                              {row.image_url ? (
+                                <img src={row.image_url} alt="Certificate" className="size-8 object-cover rounded border border-border/60 bg-black/40" />
+                              ) : (
+                                <div className="size-8 rounded border border-dashed border-border/60 bg-black/40 flex items-center justify-center text-muted-foreground">
+                                  <Image className="size-4" />
+                                </div>
+                              )}
+                              <button
+                                onClick={() => triggerImageUpload(idx, "image_url")}
+                                className="p-1.5 bg-white/5 border border-border hover:bg-white/10 hover:text-neon rounded-md transition-colors"
+                                title="Upload Certificate Image to Storage"
+                              >
+                                <Upload className="size-3.5" />
+                              </button>
+                            </div>
                           </td>
 
                           <td className="p-3 text-center">
