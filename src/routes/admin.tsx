@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { 
   ArrowLeft, Plus, Trash2, Save, RefreshCw, Upload, Database, 
-  Code, HelpCircle, Check, Loader2, FileSpreadsheet, Eye, Image
+  Code, HelpCircle, Check, Loader2, FileSpreadsheet, Eye, Image, Lock, Unlock
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -28,6 +28,10 @@ function AdminDashboard() {
   
   // Tabs state
   const [activeTab, setActiveTab] = useState<Tab>("projects");
+
+  // Private Password Protection Gate states
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
 
   // Fetch real data (falls back to mock automatically if not connected)
   const { data: projectsData } = useProjects();
@@ -56,6 +60,14 @@ function AdminDashboard() {
   const [uploadingCell, setUploadingCell] = useState<{ rowIndex: number; field: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check sessionStorage on component mount to see if already unlocked
+  useEffect(() => {
+    const unlocked = sessionStorage.getItem("admin_unlocked");
+    if (unlocked === "true") {
+      setIsUnlocked(true);
+    }
+  }, []);
 
   // Sync state when DB data finishes loading
   useEffect(() => {
@@ -122,8 +134,29 @@ function AdminDashboard() {
     }
   }, [categoriesData]);
 
-  // Dropdown list constant values
   const LUCIDE_ICONS = ["Globe", "Server", "Bot", "TestTube", "Workflow", "Palette", "Terminal", "Cpu", "Layers"];
+
+  // ================= PASSWORD GATE SUBMIT =================
+
+  const handleUnlockConsole = (e: React.FormEvent) => {
+    e.preventDefault();
+    const systemPassword = (import.meta.env.VITE_ADMIN_PASSWORD as string) || "admin123";
+
+    if (passwordInput === systemPassword) {
+      sessionStorage.setItem("admin_unlocked", "true");
+      setIsUnlocked(true);
+      setPasswordInput("");
+      toast.success("Console unlocked. Welcome back, Administrator.");
+    } else {
+      toast.error("Invalid password. Access Denied.");
+    }
+  };
+
+  const handleLockConsole = () => {
+    sessionStorage.removeItem("admin_unlocked");
+    setIsUnlocked(false);
+    toast.warning("Console locked securely.");
+  };
 
   // ================= CELL EDITING ACTIONS =================
 
@@ -538,7 +571,7 @@ function AdminDashboard() {
     }
   };
 
-  // master SQL Script
+  // SQL Script
   const sqlScript = `-- 1. CREATE CATEGORIES TABLE
 CREATE TABLE IF NOT EXISTS public.categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -624,10 +657,76 @@ CREATE POLICY "Public Delete Objects" ON storage.objects
 FOR DELETE USING (bucket_id = 'portfolio-images');
 `;
 
+  // ================= RENDER INTERFACE GATES =================
+
+  if (!isUnlocked) {
+    /* SECURE PRIVATE PASSWORD GATE VIEW */
+    return (
+      <div className="min-h-screen bg-[oklch(0.08_0.005_260)] flex items-center justify-center px-4 font-mono">
+        <div className="relative w-full max-w-md rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xl p-8 shadow-2xl overflow-hidden">
+          <div
+            className="absolute -top-24 -right-24 size-48 rounded-full pointer-events-none"
+            style={{
+              background: "radial-gradient(circle, var(--neon), transparent 65%)",
+              opacity: 0.25,
+              filter: "blur(40px)",
+            }}
+            aria-hidden
+          />
+
+          <div className="text-center">
+            <div className="inline-flex size-12 rounded-xl bg-neon/10 border border-neon/30 text-neon items-center justify-center shadow-[0_0_15px_rgba(39,201,63,0.15)] mb-5">
+              <Lock className="size-5" />
+            </div>
+            <h2 className="text-lg font-bold tracking-wider text-foreground">
+              ADMINISTRATOR CONSOLE
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-1 uppercase tracking-widest">
+              Private Security Authentication Gate
+            </p>
+          </div>
+
+          <form onSubmit={handleUnlockConsole} className="mt-8 space-y-4">
+            <div>
+              <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
+                Enter Password
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                required
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="w-full bg-black/60 border border-border hover:border-neon/40 focus:border-neon rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground/30 font-sans"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 bg-neon hover:bg-neon/90 text-black text-xs font-bold rounded-lg tracking-wider uppercase transition-all shadow-[0_0_15px_rgba(39,201,63,0.15)] cursor-pointer"
+            >
+              Unlock Console
+            </button>
+          </form>
+
+          <div className="mt-8 border-t border-border/50 pt-5 text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="size-3" /> Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* FULL EXCEL SPREADSHEET EDITOR VIEW */
   return (
     <div className="min-h-screen bg-[oklch(0.08_0.005_260)] text-foreground pt-12 pb-24">
       <div className="mx-auto max-w-7xl px-5">
-        <div className="flex items-center justify-between border-b border-border/80 pb-6 mb-8">
+        <div className="flex items-center justify-between border-b border-border/80 pb-6 mb-8 flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <Link to="/" className="p-2 border border-border bg-card/60 rounded-lg hover:text-neon hover:border-neon/60 transition-colors">
               <ArrowLeft className="size-4" />
@@ -639,13 +738,13 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                   Little-Boys/Admin
                 </h1>
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5 font-mono">
                 Manage your real database tables & file uploads instantly
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-[10px] uppercase tracking-wider ${
               isSupabaseConfigured
                 ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
@@ -654,11 +753,19 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
               <Database className="size-3" />
               {isSupabaseConfigured ? "Connected" : "Fallback Mode"}
             </div>
+
+            <button
+              onClick={handleLockConsole}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 text-red-400 font-mono text-[10px] uppercase tracking-wider rounded-md transition-colors cursor-pointer"
+              title="Lock Admin Console"
+            >
+              <Unlock className="size-3" /> Lock
+            </button>
           </div>
         </div>
 
         {!isSupabaseConfigured && (
-          <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-5 mb-8 flex flex-col md:flex-row items-start gap-4">
+          <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-5 mb-8 flex flex-col md:flex-row items-start gap-4 font-mono">
             <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg shrink-0">
               <HelpCircle className="size-5" />
             </div>
@@ -747,17 +854,9 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
           )}
         </div>
 
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleImageFileChange}
-          accept="image/*"
-          className="hidden"
-        />
-
         <div className="border border-border/80 bg-[oklch(0.12_0.01_260)] rounded-2xl overflow-hidden shadow-2xl">
           {activeTab === "sql-setup" ? (
-            <div className="p-6 md:p-8">
+            <div className="p-6 md:p-8 font-mono">
               <h2 className="text-lg font-mono font-semibold flex items-center gap-2 mb-4">
                 <Code className="text-cyan size-5" /> Supabase Database & Storage Setup Instructions
               </h2>
@@ -1046,7 +1145,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
                             )}
                           </td>
 
-                          {/* Category (DYNAMIC DROPDOWN from Categories table!) */}
                           <td className="p-3 border-r border-border/30">
                             <select
                               value={row.category || "Fullstack"}
