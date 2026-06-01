@@ -63,6 +63,11 @@ function AdminDashboard() {
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [modalDraft, setModalDraft] = useState<any | null>(null);
   
+  // Custom gradient builder states
+  const [gradientColorA, setGradientColorA] = useState("#00f2fe");
+  const [gradientColorB, setGradientColorB] = useState("#4facfe");
+  const [gradientAngle, setGradientAngle] = useState(135);
+
   // Loading status for save & seed mutations
   const [isSaving, setIsSaving] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -266,6 +271,33 @@ function AdminDashboard() {
 
   // ================= MODAL EDITOR ACTIONS =================
 
+  const updateCustomGradient = (colorA: string, colorB: string, angle: number) => {
+    setGradientColorA(colorA);
+    setGradientColorB(colorB);
+    setGradientAngle(angle);
+    setModalDraft((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        accent: `linear-gradient(${angle}deg, ${colorA}, ${colorB})`
+      };
+    });
+  };
+
+  const applyPresetGradient = (gradient: string) => {
+    setModalDraft((prev: any) => {
+      if (!prev) return prev;
+      return { ...prev, accent: gradient };
+    });
+
+    const match = gradient.match(/linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/);
+    if (match) {
+      setGradientAngle(parseInt(match[1]) || 135);
+      setGradientColorA(match[2]);
+      setGradientColorB(match[3]);
+    }
+  };
+
   const openEditorModal = (index: number) => {
     setEditingRowIndex(index);
     let originalRow = null;
@@ -283,6 +315,27 @@ function AdminDashboard() {
     
     if (originalRow) {
       setModalDraft({ ...originalRow });
+      
+      // Parse accent to set initial gradient values if it's a projects row
+      if (activeTab === "projects" && originalRow.accent) {
+        const match = originalRow.accent.match(/linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/);
+        if (match) {
+          const angle = parseInt(match[1]) || 135;
+          const colorA = match[2];
+          const colorB = match[3];
+          setGradientAngle(angle);
+          setGradientColorA(colorA);
+          setGradientColorB(colorB);
+        } else if (originalRow.accent.startsWith("#")) {
+          setGradientColorA(originalRow.accent);
+          setGradientColorB(originalRow.accent);
+          setGradientAngle(135);
+        } else {
+          setGradientColorA("#00f2fe");
+          setGradientColorB("#4facfe");
+          setGradientAngle(135);
+        }
+      }
       setIsModalOpen(true);
     }
   };
@@ -1754,26 +1807,119 @@ FOR DELETE USING (
                       />
                     </div>
 
-                    <div className="bg-black/30 border border-border/60 p-4 rounded-xl space-y-3.5">
+                    <div className="bg-black/30 border border-border/60 p-4 rounded-xl space-y-4">
                       <div>
-                        <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">CSS Accent Theme (Color or Gradient)</label>
+                        <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">CSS Accent Theme</label>
                         <div className="flex gap-2">
                           <input 
                             type="text" 
                             value={modalDraft.accent || ""} 
-                            onChange={(e) => setModalDraft({ ...modalDraft, accent: e.target.value })}
+                            onChange={(e) => {
+                              const newAccent = e.target.value;
+                              setModalDraft({ ...modalDraft, accent: newAccent });
+                              // Try parsing on the fly so sliders update if manual input matches a gradient
+                              const match = newAccent.match(/linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/);
+                              if (match) {
+                                setGradientAngle(parseInt(match[1]) || 135);
+                                setGradientColorA(match[2]);
+                                setGradientColorB(match[3]);
+                              }
+                            }}
                             placeholder="linear-gradient(135deg, #00f2fe, #4facfe)"
                             className="flex-1 bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                           />
-                          {/* Solid Color Picker input */}
-                          <div className="relative size-9 rounded-lg border border-border bg-black/40 overflow-hidden flex items-center justify-center shrink-0 hover:border-cyan/40 transition-colors" title="Solid Color Picker">
-                            <input 
-                              type="color" 
-                              value={modalDraft.accent?.startsWith("#") && modalDraft.accent.length === 7 ? modalDraft.accent : "#00f2fe"} 
-                              onChange={(e) => setModalDraft({ ...modalDraft, accent: e.target.value })}
-                              className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
-                            />
+                        </div>
+                      </div>
+
+                      {/* Custom Gradient Builder Interface */}
+                      <div className="bg-black/50 border border-border/40 p-4 rounded-xl space-y-4">
+                        <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-cyan">Dynamic Gradient Builder</span>
+                          <span className="text-[9px] text-muted-foreground bg-white/5 border border-border px-2 py-0.5 rounded-full">
+                            Active: {gradientAngle}° angle
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3.5">
+                          <div>
+                            <label className="block text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Color A (Start)</label>
+                            <div className="flex gap-2 items-center bg-black/40 border border-border/60 hover:border-cyan/30 rounded-lg p-1.5 transition-all">
+                              <div className="relative size-7 rounded border border-border bg-black/20 overflow-hidden flex items-center justify-center shrink-0">
+                                <input 
+                                  type="color" 
+                                  value={gradientColorA} 
+                                  onChange={(e) => {
+                                    const colA = e.target.value;
+                                    updateCustomGradient(colA, gradientColorB, gradientAngle);
+                                  }}
+                                  className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
+                                />
+                              </div>
+                              <input 
+                                type="text"
+                                value={gradientColorA}
+                                onChange={(e) => {
+                                  let val = e.target.value;
+                                  if (val.startsWith("#") && val.length <= 7) {
+                                    setGradientColorA(val);
+                                    if (val.length === 7) {
+                                      updateCustomGradient(val, gradientColorB, gradientAngle);
+                                    }
+                                  }
+                                }}
+                                className="w-full bg-transparent border-0 text-xs font-mono focus:outline-none text-foreground"
+                              />
+                            </div>
                           </div>
+
+                          <div>
+                            <label className="block text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Color B (End)</label>
+                            <div className="flex gap-2 items-center bg-black/40 border border-border/60 hover:border-cyan/30 rounded-lg p-1.5 transition-all">
+                              <div className="relative size-7 rounded border border-border bg-black/20 overflow-hidden flex items-center justify-center shrink-0">
+                                <input 
+                                  type="color" 
+                                  value={gradientColorB} 
+                                  onChange={(e) => {
+                                    const colB = e.target.value;
+                                    updateCustomGradient(gradientColorA, colB, gradientAngle);
+                                  }}
+                                  className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
+                                />
+                              </div>
+                              <input 
+                                type="text"
+                                value={gradientColorB}
+                                onChange={(e) => {
+                                  let val = e.target.value;
+                                  if (val.startsWith("#") && val.length <= 7) {
+                                    setGradientColorB(val);
+                                    if (val.length === 7) {
+                                      updateCustomGradient(gradientColorA, val, gradientAngle);
+                                    }
+                                  }
+                                }}
+                                className="w-full bg-transparent border-0 text-xs font-mono focus:outline-none text-foreground"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+                            <span>Gradient Angle</span>
+                            <span>{gradientAngle}°</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="360"
+                            value={gradientAngle}
+                            onChange={(e) => {
+                              const angle = parseInt(e.target.value) || 0;
+                              updateCustomGradient(gradientColorA, gradientColorB, angle);
+                            }}
+                            className="w-full h-1.5 bg-black/60 rounded-lg appearance-none cursor-pointer accent-cyan"
+                          />
                         </div>
                       </div>
 
@@ -1795,7 +1941,7 @@ FOR DELETE USING (
                             <button
                               key={preset.name}
                               type="button"
-                              onClick={() => setModalDraft({ ...modalDraft, accent: preset.gradient })}
+                              onClick={() => applyPresetGradient(preset.gradient)}
                               className="size-7 rounded-lg border border-border/80 hover:scale-110 hover:border-white transition-all cursor-pointer shadow-md"
                               style={{ background: preset.gradient }}
                               title={preset.name}
