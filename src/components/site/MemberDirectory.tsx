@@ -53,9 +53,19 @@ function MemberCard({ b, onOpen }: { b: Builder; onOpen: () => void }) {
             {b.role}
           </p>
         </div>
-        <span className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0">
-          {b.category}
-        </span>
+        <div className="flex flex-wrap gap-1 shrink-0">
+          {b.category ? (
+            b.category.split(",").map(c => c.trim()).map(cat => (
+              <span key={cat} className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0 bg-white/5">
+                {cat}
+              </span>
+            ))
+          ) : (
+            <span className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0 bg-white/5">
+              -
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="mt-3 text-sm text-foreground/80 line-clamp-2">
@@ -127,7 +137,7 @@ export function MemberDialog({ b }: { b: Builder }) {
                 {b.name}
               </DialogTitle>
               <DialogDescription className="font-mono text-xs uppercase tracking-wider text-cyan mt-1">
-                {b.role} · {b.category}
+                {b.role} · {b.category ? b.category.split(",").map(c => c.trim()).join(" & ") : ""}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -243,7 +253,11 @@ export function MemberDirectory() {
   const filters = useMemo(() => ["All", ...categories.map((c) => c.name)], [categories]);
 
   const filtered = useMemo(
-    () => (filter === "All" ? builders : builders.filter((b) => b.category === filter)),
+    () => (
+      filter === "All"
+        ? builders
+        : builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(filter))
+    ),
     [filter, builders],
   );
 
@@ -254,7 +268,9 @@ export function MemberDirectory() {
         {filters.map((f) => {
           const active = filter === f;
           const count =
-            f === "All" ? builders.length : builders.filter((b) => b.category === f).length;
+            f === "All"
+              ? builders.length
+              : builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(f)).length;
           return (
             <button
               key={f}

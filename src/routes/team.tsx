@@ -30,7 +30,7 @@ function TeamPage() {
 
   const counts = categories.map((cat) => ({
     label: cat.name,
-    count: builders.filter((b) => b.category === cat.name).length,
+    count: builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(cat.name)).length,
   }));
 
   return (

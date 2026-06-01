@@ -2056,18 +2056,40 @@ FOR DELETE USING (
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Category</label>
-                      <select
-                        value={modalDraft.category || "Fullstack"}
-                        onChange={(e) => setModalDraft({ ...modalDraft, category: e.target.value })}
-                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all cursor-pointer font-sans"
-                      >
-                        {localCategories.map((cat) => (
-                          <option key={cat.id} value={cat.name} className="bg-[#0c0d12]">
-                            {cat.name}
-                          </option>
-                        ))}
-                      </select>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Categories (Multiple allowed)</label>
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-black/40 border border-border rounded-lg max-h-[140px] overflow-y-auto">
+                        {localCategories.map((cat) => {
+                          const activeCategories = modalDraft.category 
+                            ? modalDraft.category.split(",").map((c: string) => c.trim())
+                            : [];
+                          const isSelected = activeCategories.includes(cat.name);
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                let newCats;
+                                if (isSelected) {
+                                  newCats = activeCategories.filter((c: string) => c !== cat.name);
+                                } else {
+                                  newCats = [...activeCategories, cat.name];
+                                }
+                                setModalDraft({ 
+                                  ...modalDraft, 
+                                  category: newCats.filter((c: string) => c !== "").join(", ") 
+                                });
+                              }}
+                              className={`px-2.5 py-1 rounded text-[11px] font-mono transition-all border cursor-pointer ${
+                                isSelected
+                                  ? "bg-cyan/15 text-cyan border-cyan/40 shadow-[0_0_8px_rgba(6,182,212,0.1)]"
+                                  : "bg-black/40 text-muted-foreground border-border/80 hover:text-foreground hover:bg-white/5"
+                              }`}
+                            >
+                              {cat.name}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 

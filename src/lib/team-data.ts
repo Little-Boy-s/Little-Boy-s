@@ -4,7 +4,7 @@ export type TeamCategory = "Frontend" | "Backend" | "AI" | "DevOps" | "Design" |
 export type Builder = {
   name: string;
   role: string;
-  category: TeamCategory;
+  category: string;
   github: string;
   hue: number; // 0-360, hue for avatar gradient
   // Rich profile (shown in dialog)
@@ -19,7 +19,7 @@ export type Builder = {
   avatarUrl?: string;
 };
 
-type Row = [string, string, TeamCategory, string, string, number, string, string[], string];
+type Row = [string, string, string, string, string, number, string, string[], string];
 
 // [name, role, category, tagline, location, years, bio, skills, funFact]
 const ROWS: Row[] = [
