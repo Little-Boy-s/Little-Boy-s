@@ -6,7 +6,7 @@ import {
   Edit, X
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured, setSupabaseAdminKey } from "@/lib/supabase";
 import { useProjects, useBuilders, useServices, useCategories, useAchievements } from "@/hooks/useSupabaseData";
 import { projects as mockProjects, achievements as mockAchievements } from "@/lib/site-data";
 import { builders as mockBuilders } from "@/lib/team-data";
@@ -89,6 +89,11 @@ function AdminDashboard() {
       setIsUnlocked(true);
       const useMock = sessionStorage.getItem("admin_use_mock") === "true";
       setIsMockMode(!isSupabaseConfigured || useMock);
+      
+      const savedKey = sessionStorage.getItem("admin_key") || "";
+      if (savedKey) {
+        setSupabaseAdminKey(savedKey);
+      }
     }
   }, []);
 
@@ -198,6 +203,7 @@ function AdminDashboard() {
         sessionStorage.setItem("admin_unlocked", "true");
         sessionStorage.setItem("admin_key", "admin123");
         sessionStorage.setItem("admin_use_mock", "true");
+        setSupabaseAdminKey("admin123");
         setIsUnlocked(true);
         setIsMockMode(true);
         setPasswordInput("");
@@ -222,6 +228,7 @@ function AdminDashboard() {
         sessionStorage.setItem("admin_unlocked", "true");
         sessionStorage.setItem("admin_key", passwordInput);
         sessionStorage.removeItem("admin_use_mock");
+        setSupabaseAdminKey(passwordInput);
         setIsUnlocked(true);
         setIsMockMode(false);
         setPasswordInput("");
@@ -231,6 +238,7 @@ function AdminDashboard() {
           sessionStorage.setItem("admin_unlocked", "true");
           sessionStorage.setItem("admin_key", "admin123");
           sessionStorage.setItem("admin_use_mock", "true");
+          setSupabaseAdminKey("admin123");
           setIsUnlocked(true);
           setIsMockMode(true);
           setPasswordInput("");
@@ -248,6 +256,7 @@ function AdminDashboard() {
         sessionStorage.setItem("admin_unlocked", "true");
         sessionStorage.setItem("admin_key", "admin123");
         sessionStorage.setItem("admin_use_mock", "true");
+        setSupabaseAdminKey("admin123");
         setIsUnlocked(true);
         setIsMockMode(true);
         setPasswordInput("");
@@ -266,6 +275,7 @@ function AdminDashboard() {
     sessionStorage.removeItem("admin_unlocked");
     sessionStorage.removeItem("admin_key");
     sessionStorage.removeItem("admin_use_mock");
+    setSupabaseAdminKey("");
     setIsUnlocked(false);
     setIsMockMode(!isSupabaseConfigured);
     toast.warning("Console locked securely.");
