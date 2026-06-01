@@ -814,14 +814,6 @@ FOR DELETE USING (bucket_id = 'portfolio-images');
             >
               <FileSpreadsheet className="size-3.5" /> Categories
             </button>
-            <button
-              onClick={() => setActiveTab("sql-setup")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
-                activeTab === "sql-setup" ? "bg-cyan text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Code className="size-3.5" /> SQL Setup
-            </button>
           </div>
 
           {activeTab !== "sql-setup" && (
