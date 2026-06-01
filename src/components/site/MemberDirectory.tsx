@@ -7,8 +7,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { TEAM_FILTERS, type Builder } from "@/lib/team-data";
-import { useBuilders } from "@/hooks/useSupabaseData";
+import { type Builder } from "@/lib/team-data";
+import { useBuilders, useCategories } from "@/hooks/useSupabaseData";
 
 function initials(name: string) {
   return name
@@ -236,8 +236,11 @@ export function MemberDialog({ b }: { b: Builder }) {
 
 export function MemberDirectory() {
   const { data: builders = [] } = useBuilders();
-  const [filter, setFilter] = useState<(typeof TEAM_FILTERS)[number]>("All");
+  const { data: categories = [] } = useCategories();
+  const [filter, setFilter] = useState<string>("All");
   const [active, setActive] = useState<Builder | null>(null);
+
+  const filters = useMemo(() => ["All", ...categories.map((c) => c.name)], [categories]);
 
   const filtered = useMemo(
     () => (filter === "All" ? builders : builders.filter((b) => b.category === filter)),
@@ -248,7 +251,7 @@ export function MemberDirectory() {
     <>
       {/* Filters */}
       <div className="mt-8 flex flex-wrap justify-center gap-2">
-        {TEAM_FILTERS.map((f) => {
+        {filters.map((f) => {
           const active = filter === f;
           const count =
             f === "All" ? builders.length : builders.filter((b) => b.category === f).length;

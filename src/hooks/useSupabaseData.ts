@@ -150,3 +150,55 @@ export function useServices() {
     staleTime: 1000 * 60 * 5,
   });
 }
+
+// 4. Categories Hook & Types
+export interface Category {
+  id?: string;
+  name: string;
+  created_at?: string;
+}
+
+const mockCategories: Category[] = [
+  { name: "Frontend" },
+  { name: "Backend" },
+  { name: "Fullstack" },
+  { name: "AI" },
+  { name: "DevOps" },
+  { name: "Mobile" },
+  { name: "Design" },
+];
+
+export function useCategories() {
+  return useQuery<Category[]>({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      if (!isSupabaseConfigured) {
+        console.warn("Supabase is not configured. Falling back to mock categories.");
+        return mockCategories;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .select("*")
+          .order("name", { ascending: true });
+
+        if (error) {
+          console.warn("Error fetching categories, falling back to mock categories:", error.message);
+          return mockCategories;
+        }
+
+        if (!data || data.length === 0) {
+          console.info("Categories database table is empty. Showing mock categories.");
+          return mockCategories;
+        }
+
+        return data as Category[];
+      } catch (err) {
+        console.warn("Failed to reach Supabase database for categories. Falling back to mock data.", err);
+        return mockCategories;
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
