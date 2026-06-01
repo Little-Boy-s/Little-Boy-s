@@ -10,7 +10,6 @@ import { TerminalTyping } from "@/components/site/TerminalTyping";
 import { expertise } from "@/lib/site-data";
 import { useProjects, useBuilders, useAchievements } from "@/hooks/useSupabaseData";
 
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -60,7 +59,10 @@ function Home() {
 
         {/* Logo stage — wireframe / neon artifact */}
         <Reveal delay={80}>
-          <div className="relative mx-auto mt-10 flex items-center justify-center" style={{ width: 280, height: 280 }}>
+          <div
+            className="relative mx-auto mt-10 flex items-center justify-center"
+            style={{ width: 280, height: 280 }}
+          >
             <div
               className="absolute inset-0 rounded-full border border-neon/25"
               style={{ animation: "spin 22s linear infinite" }}
@@ -95,9 +97,15 @@ function Home() {
               <img src={logo} alt="Little Boy's logo" className="w-32 h-auto float logo-neon" />
             </div>
 
-            <span className="absolute -top-2 left-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">v1.0.0</span>
-            <span className="absolute -top-2 right-0 font-mono text-[10px] uppercase tracking-wider text-neon">● online</span>
-            <span className="absolute -bottom-2 left-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">~/team</span>
+            <span className="absolute -top-2 left-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              v1.0.0
+            </span>
+            <span className="absolute -top-2 right-0 font-mono text-[10px] uppercase tracking-wider text-neon">
+              ● online
+            </span>
+            <span className="absolute -bottom-2 left-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              ~/team
+            </span>
             <span className="absolute -bottom-2 right-0 font-mono text-[10px] uppercase tracking-wider text-neon">
               {builders.length} builder{builders.length > 1 ? "s" : ""}
             </span>
@@ -170,26 +178,35 @@ function Home() {
                 </span>
                 <span className="text-muted-foreground">utf-8 · md</span>
               </div>
-              <span className="font-mono text-[11px] text-muted-foreground">main · {builders.length} ⭐</span>
+              <span className="font-mono text-[11px] text-muted-foreground">
+                main · {builders.length} ⭐
+              </span>
             </div>
 
             {/* code body with line numbers */}
             <div className="grid grid-cols-[auto_1fr] font-mono text-[13px] md:text-sm leading-7">
               <pre className="select-none text-right pr-4 pl-4 py-5 text-muted-foreground/60 border-r border-border bg-card/30">
-{Array.from({ length: 14 }, (_, i) => i + 1).join("\n")}
+                {Array.from({ length: 14 }, (_, i) => i + 1).join("\n")}
               </pre>
               <pre className="py-5 px-5 overflow-x-auto">
-<span className="tok-cmt"># Little Boy's — Engineering Philosophy</span>{"\n\n"}
-<span className="tok-key">## try-hard culture</span>{"\n"}
-- We ship <span className="tok-str">"the boring stuff"</span>: tests, traces, dashboards.{"\n"}
-- Every PR gets <span className="tok-num">2+</span> reviewers. No rubber stamps.{"\n\n"}
-<span className="tok-key">## automated everything</span>{"\n"}
-- <span className="tok-fn">pytest</span>, <span className="tok-fn">vitest</span>, <span className="tok-fn">playwright</span>, visual-regression.{"\n"}
-- <span className="tok-fn">CI</span> blocks merge on red. Friday deploys are normal.{"\n\n"}
-<span className="tok-key">## high-performance by default</span>{"\n"}
-- p95 budgets per endpoint. Profilers in prod.{"\n"}
-- <span className="tok-var">SLO</span> = <span className="tok-num">99.9%</span> uptime · <span className="tok-num">{"<200ms"}</span> p95 reads.{"\n\n"}
-<span className="tok-cmt">// "Move fast, but you have to clean up after yourself."</span>
+                <span className="tok-cmt"># Little Boy's — Engineering Philosophy</span>
+                {"\n\n"}
+                <span className="tok-key">## try-hard culture</span>
+                {"\n"}- We ship <span className="tok-str">"the boring stuff"</span>: tests, traces,
+                dashboards.{"\n"}- Every PR gets <span className="tok-num">2+</span> reviewers. No
+                rubber stamps.{"\n\n"}
+                <span className="tok-key">## automated everything</span>
+                {"\n"}- <span className="tok-fn">pytest</span>,{" "}
+                <span className="tok-fn">vitest</span>, <span className="tok-fn">playwright</span>,
+                visual-regression.{"\n"}- <span className="tok-fn">CI</span> blocks merge on red.
+                Friday deploys are normal.{"\n\n"}
+                <span className="tok-key">## high-performance by default</span>
+                {"\n"}- p95 budgets per endpoint. Profilers in prod.{"\n"}-{" "}
+                <span className="tok-var">SLO</span> = <span className="tok-num">99.9%</span> uptime
+                · <span className="tok-num">{"<200ms"}</span> p95 reads.{"\n\n"}
+                <span className="tok-cmt">
+                  // "Move fast, but you have to clean up after yourself."
+                </span>
               </pre>
             </div>
           </div>
@@ -257,36 +274,53 @@ function Home() {
           <div className="mt-10 rounded-2xl border border-border bg-[oklch(0.14_0.012_260)] overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/60">
               <div className="flex items-center gap-2 font-mono text-[11px]">
-                <span className="px-2 py-1 rounded-md bg-background border border-border">package.json</span>
+                <span className="px-2 py-1 rounded-md bg-background border border-border">
+                  package.json
+                </span>
                 <span className="text-muted-foreground">json</span>
               </div>
-              <span className="font-mono text-[11px] text-muted-foreground">deps · {expertise.reduce((n, g) => n + g.items.length, 0)}</span>
+              <span className="font-mono text-[11px] text-muted-foreground">
+                deps · {expertise.reduce((n, g) => n + g.items.length, 0)}
+              </span>
             </div>
 
             <div className="grid grid-cols-[auto_1fr] font-mono text-[12.5px] md:text-sm leading-7">
               <pre className="select-none text-right pr-4 pl-4 py-5 text-muted-foreground/60 border-r border-border bg-card/30">
-{Array.from(
-  { length: 3 + expertise.reduce((n, g) => n + g.items.length + 2, 0) },
-  (_, i) => i + 1,
-).join("\n")}
+                {Array.from(
+                  { length: 3 + expertise.reduce((n, g) => n + g.items.length + 2, 0) },
+                  (_, i) => i + 1,
+                ).join("\n")}
               </pre>
               <pre className="py-5 px-5 overflow-x-auto">
-{"{"}{"\n"}
-{"  "}<span className="tok-key">"name"</span>: <span className="tok-str">"little-boys"</span>,{"\n"}
-{"  "}<span className="tok-key">"version"</span>: <span className="tok-str">"1.0.0"</span>,{"\n"}
-{expertise.map((g, gi) => (
-  <span key={g.title}>
-    {"  "}<span className="tok-key">{`"${g.title.toLowerCase().replace(/\s+/g, "-")}"`}</span>: {"{"}{"\n"}
-    {g.items.map((t, ti) => (
-      <span key={t}>
-        {"    "}<span className="tok-key">{`"${t}"`}</span>: <span className="tok-str">"^latest"</span>
-        {ti < g.items.length - 1 ? "," : ""}{"\n"}
-      </span>
-    ))}
-    {"  }"}{gi < expertise.length - 1 ? "," : ""}{"\n"}
-  </span>
-))}
-{"}"}
+                {"{"}
+                {"\n"}
+                {"  "}
+                <span className="tok-key">"name"</span>:{" "}
+                <span className="tok-str">"little-boys"</span>,{"\n"}
+                {"  "}
+                <span className="tok-key">"version"</span>: <span className="tok-str">"1.0.0"</span>
+                ,{"\n"}
+                {expertise.map((g, gi) => (
+                  <span key={g.title}>
+                    {"  "}
+                    <span className="tok-key">{`"${g.title.toLowerCase().replace(/\s+/g, "-")}"`}</span>
+                    : {"{"}
+                    {"\n"}
+                    {g.items.map((t, ti) => (
+                      <span key={t}>
+                        {"    "}
+                        <span className="tok-key">{`"${t}"`}</span>:{" "}
+                        <span className="tok-str">"^latest"</span>
+                        {ti < g.items.length - 1 ? "," : ""}
+                        {"\n"}
+                      </span>
+                    ))}
+                    {"  }"}
+                    {gi < expertise.length - 1 ? "," : ""}
+                    {"\n"}
+                  </span>
+                ))}
+                {"}"}
               </pre>
             </div>
           </div>
@@ -295,15 +329,18 @@ function Home() {
         {/* Floating dependency badges */}
         <Reveal delay={200}>
           <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {expertise.flatMap((g) => g.items).slice(0, 14).map((t, i) => (
-              <span
-                key={t}
-                className="px-3 py-1.5 text-xs font-mono rounded-md bg-white/5 ring-1 ring-border hover:ring-neon/60 hover:text-neon transition-all"
-                style={{ animation: `float 6s ease-in-out ${i * 0.25}s infinite` }}
-              >
-                <span className="text-muted-foreground">{">"}</span> {t}
-              </span>
-            ))}
+            {expertise
+              .flatMap((g) => g.items)
+              .slice(0, 14)
+              .map((t, i) => (
+                <span
+                  key={t}
+                  className="px-3 py-1.5 text-xs font-mono rounded-md bg-white/5 ring-1 ring-border hover:ring-neon/60 hover:text-neon transition-all"
+                  style={{ animation: `float 6s ease-in-out ${i * 0.25}s infinite` }}
+                >
+                  <span className="text-muted-foreground">{">"}</span> {t}
+                </span>
+              ))}
           </div>
         </Reveal>
       </section>

@@ -7,7 +7,10 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — Little Boy's" },
-      { name: "description", content: "About the Little Boy's tech collective and the people behind it." },
+      {
+        name: "description",
+        content: "About the Little Boy's tech collective and the people behind it.",
+      },
       { property: "og:title", content: "About — Little Boy's" },
       { property: "og:description", content: "About Little Boy's." },
     ],
@@ -20,17 +23,14 @@ function About() {
     <>
       <section className="mx-auto max-w-3xl px-5 pt-20 pb-10 text-center">
         <Reveal>
-          <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
-            // about us
-          </p>
+          <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">// about us</p>
           <h1 className="mt-4 text-4xl md:text-5xl font-extrabold tracking-tight">
             We are <span className="gradient-text">Little Boy's</span> — a tech collective.
           </h1>
           <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
-            A small-but-growing group of engineers obsessed with shipping
-            software that actually works. Code review, observability, automated
-            testing, CI/CD — the boring stuff that lets us move fast without
-            breaking.
+            A small-but-growing group of engineers obsessed with shipping software that actually
+            works. Code review, observability, automated testing, CI/CD — the boring stuff that lets
+            us move fast without breaking.
           </p>
         </Reveal>
       </section>
