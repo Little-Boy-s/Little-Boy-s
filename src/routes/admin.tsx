@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { 
   ArrowLeft, Plus, Trash2, Save, RefreshCw, Upload, Database, 
-  Code, HelpCircle, Check, Loader2, FileSpreadsheet, Eye, Image, Lock, Unlock
+  Code, HelpCircle, Check, Loader2, FileSpreadsheet, Eye, Image, Lock, Unlock,
+  Edit, X
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -57,10 +58,15 @@ function AdminDashboard() {
   // Cell editing state: { rowIndex, field }
   const [editingCell, setEditingCell] = useState<{ rowIndex: number; field: string } | null>(null);
   
+  // Row Editor Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [modalDraft, setModalDraft] = useState<any | null>(null);
+  
   // Loading status for save & seed mutations
   const [isSaving, setIsSaving] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
-  const [uploadingCell, setUploadingCell] = useState<{ rowIndex: number; field: string } | null>(null);
+  const [uploadingCell, setUploadingCell] = useState<{ rowIndex: number | null; field: string; isModal?: boolean } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -244,6 +250,60 @@ function AdminDashboard() {
     }
   };
 
+  // ================= MODAL EDITOR ACTIONS =================
+
+  const openEditorModal = (index: number) => {
+    setEditingRowIndex(index);
+    let originalRow = null;
+    if (activeTab === "projects") {
+      originalRow = localProjects[index];
+    } else if (activeTab === "builders") {
+      originalRow = localBuilders[index];
+    } else if (activeTab === "services") {
+      originalRow = localServices[index];
+    } else if (activeTab === "categories") {
+      originalRow = localCategories[index];
+    } else if (activeTab === "achievements") {
+      originalRow = localAchievements[index];
+    }
+    
+    if (originalRow) {
+      setModalDraft({ ...originalRow });
+      setIsModalOpen(true);
+    }
+  };
+
+  const saveModalChanges = () => {
+    if (editingRowIndex === null || !modalDraft) return;
+    
+    if (activeTab === "projects") {
+      const updated = [...localProjects];
+      updated[editingRowIndex] = modalDraft;
+      setLocalProjects(updated);
+    } else if (activeTab === "builders") {
+      const updated = [...localBuilders];
+      updated[editingRowIndex] = modalDraft;
+      setLocalBuilders(updated);
+    } else if (activeTab === "services") {
+      const updated = [...localServices];
+      updated[editingRowIndex] = modalDraft;
+      setLocalServices(updated);
+    } else if (activeTab === "categories") {
+      const updated = [...localCategories];
+      updated[editingRowIndex] = modalDraft;
+      setLocalCategories(updated);
+    } else if (activeTab === "achievements") {
+      const updated = [...localAchievements];
+      updated[editingRowIndex] = modalDraft;
+      setLocalAchievements(updated);
+    }
+    
+    setIsModalOpen(false);
+    setEditingRowIndex(null);
+    setModalDraft(null);
+    toast.success("Applied changes to draft spreadsheet buffer!");
+  };
+
   // ================= GRID ROW OPERATIONS =================
 
   const addRow = () => {
@@ -361,8 +421,8 @@ function AdminDashboard() {
 
   // ================= DYNAMIC IMAGE STORAGE UPLOADER =================
 
-  const triggerImageUpload = (rowIndex: number, field: string) => {
-    setUploadingCell({ rowIndex, field });
+  const triggerImageUpload = (rowIndex: number | null, field: string, isModal = false) => {
+    setUploadingCell({ rowIndex, field, isModal });
     setTimeout(() => {
       fileInputRef.current?.click();
     }, 50);
@@ -375,7 +435,7 @@ function AdminDashboard() {
     }
 
     const file = e.target.files[0];
-    const { rowIndex, field } = uploadingCell;
+    const { rowIndex, field, isModal } = uploadingCell;
 
     if (!isSupabaseConfigured) {
       toast.error("Supabase is not configured yet! Setup credentials first.");
@@ -407,7 +467,14 @@ function AdminDashboard() {
 
       const publicUrl = urlData.publicUrl;
 
-      handleCellChange(publicUrl, rowIndex, field);
+      if (isModal) {
+        setModalDraft((prev: any) => ({
+          ...prev,
+          [field]: publicUrl
+        }));
+      } else if (rowIndex !== null) {
+        handleCellChange(publicUrl, rowIndex, field);
+      }
 
       toast.success("Image uploaded to Storage!", { id: uploadToast });
     } catch (error: any) {
@@ -1253,12 +1320,22 @@ FOR DELETE USING (
                           </td>
 
                           <td className="p-3 text-center">
-                            <button
-                              onClick={() => deleteRow(idx)}
-                              className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => openEditorModal(idx)}
+                                className="p-1.5 bg-cyan-950/20 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Edit row in spacious layout"
+                              >
+                                <Edit className="size-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteRow(idx)}
+                                className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Delete row"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -1576,12 +1653,22 @@ FOR DELETE USING (
                           </td>
 
                           <td className="p-3 text-center">
-                            <button
-                              onClick={() => deleteRow(idx)}
-                              className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => openEditorModal(idx)}
+                                className="p-1.5 bg-cyan-950/20 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Edit row in spacious layout"
+                              >
+                                <Edit className="size-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteRow(idx)}
+                                className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Delete row"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -1665,12 +1752,22 @@ FOR DELETE USING (
                           </td>
 
                           <td className="p-3 text-center">
-                            <button
-                              onClick={() => deleteRow(idx)}
-                              className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => openEditorModal(idx)}
+                                className="p-1.5 bg-cyan-950/20 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Edit row in spacious layout"
+                              >
+                                <Edit className="size-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteRow(idx)}
+                                className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Delete row"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -1721,12 +1818,22 @@ FOR DELETE USING (
                           </td>
 
                           <td className="p-3 text-center">
-                            <button
-                              onClick={() => deleteRow(idx)}
-                              className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => openEditorModal(idx)}
+                                className="p-1.5 bg-cyan-950/20 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Edit row in spacious layout"
+                              >
+                                <Edit className="size-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteRow(idx)}
+                                className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Delete row"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -1834,12 +1941,22 @@ FOR DELETE USING (
                           </td>
 
                           <td className="p-3 text-center">
-                            <button
-                              onClick={() => deleteRow(idx)}
-                              className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => openEditorModal(idx)}
+                                className="p-1.5 bg-cyan-950/20 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Edit row in spacious layout"
+                              >
+                                <Edit className="size-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteRow(idx)}
+                                className="p-1.5 bg-red-950/20 hover:bg-red-500/20 text-red-400 border border-red-500/10 rounded-md transition-colors cursor-pointer"
+                                title="Delete row"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -1851,6 +1968,490 @@ FOR DELETE USING (
           )}
         </div>
       </div>
+
+      {isModalOpen && modalDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          {/* Modal Container */}
+          <div className="relative w-full max-w-2xl bg-[#090b10] border border-border rounded-2xl shadow-2xl overflow-hidden font-mono flex flex-col my-8 max-h-[85vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border bg-card/60">
+              <div className="flex items-center gap-2">
+                <span className="size-2 rounded-full bg-cyan animate-pulse" />
+                <h3 className="text-sm font-bold tracking-wider text-foreground uppercase">
+                  Row Editor — Tab: {activeTab}
+                </h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingRowIndex(null);
+                  setModalDraft(null);
+                }}
+                className="p-1.5 hover:bg-white/5 text-muted-foreground hover:text-foreground rounded-lg transition-all cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Modal Body / Scrollable Content */}
+            <div className="p-6 overflow-y-auto space-y-5 flex-1 select-none">
+              {activeTab === "projects" && (
+                <div className="space-y-4 text-left">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Project Title</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.title || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, title: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">CSS Accent Gradient</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.accent || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, accent: e.target.value })}
+                        placeholder="linear-gradient(135deg, #00f2fe, #4facfe)"
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Accent Preview Block */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Accent Color Preview</label>
+                    <div 
+                      className="h-9 rounded-lg border border-border/80 flex items-center justify-center text-[10px] text-black font-semibold font-sans tracking-wide transition-all shadow-[inset_0_1px_3px_rgba(255,255,255,0.15)]"
+                      style={{ background: modalDraft.accent || "#000", color: modalDraft.accent?.includes("#fff") || modalDraft.accent === "white" ? "#000" : "#fff" }}
+                    >
+                      Active Accent Theme Rendering
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Repository URL</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.repo_url || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, repo_url: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Live URL</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.live_url || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, live_url: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Tech Stack Tags</label>
+                    <p className="text-[9px] text-muted-foreground mb-2">Use commas to separate tools (e.g. React, Tailwind CSS, Fastify, Supabase)</p>
+                    <input 
+                      type="text" 
+                      value={modalDraft.stack?.join(", ") || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, stack: e.target.value.split(",").map(s => s.trim()) })}
+                      placeholder="e.g. React, Next.js, Node.js"
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                    />
+                    
+                    {/* Live Tech Badges Preview */}
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {modalDraft.stack && modalDraft.stack.filter((s: string) => s !== "").length > 0 ? (
+                        modalDraft.stack.filter((s: string) => s !== "").map((s: string) => (
+                          <span key={s} className="px-2.5 py-0.5 bg-white/5 border border-cyan/20 rounded text-[9px] text-cyan font-sans tracking-wide">
+                            {s}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/40 italic">No stack badges yet</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Project Logo</label>
+                    <div className="flex items-center gap-4 bg-black/40 border border-border/80 p-3.5 rounded-xl">
+                      {modalDraft.logo_url ? (
+                        <img src={modalDraft.logo_url} alt="Logo" className="size-16 object-cover rounded border border-border/80 bg-black" />
+                      ) : (
+                        <div className="size-16 rounded border border-dashed border-border/60 bg-black flex items-center justify-center text-muted-foreground">
+                          <Image className="size-6" />
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={() => triggerImageUpload(null, "logo_url", true)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 hover:text-cyan border border-border text-[10px] uppercase font-bold rounded-lg tracking-wider transition-colors cursor-pointer"
+                        >
+                          <Upload className="size-3" /> Upload Logo
+                        </button>
+                        <p className="text-[9px] text-muted-foreground">Upload square image to secure Supabase Storage.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Project Description</label>
+                    <textarea 
+                      value={modalDraft.description || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, description: e.target.value })}
+                      rows={5}
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "builders" && (
+                <div className="space-y-4 text-left">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Builder Name</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.name || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, name: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Category</label>
+                      <select
+                        value={modalDraft.category || "Fullstack"}
+                        onChange={(e) => setModalDraft({ ...modalDraft, category: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all cursor-pointer font-sans"
+                      >
+                        {localCategories.map((cat) => (
+                          <option key={cat.id} value={cat.name} className="bg-[#0c0d12]">
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Role / Title</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.role || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, role: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Location</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.location || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, location: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Tagline</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.tagline || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, tagline: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Experience (Years)</label>
+                      <input 
+                        type="number" 
+                        value={modalDraft.years_exp ?? 0} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, years_exp: parseInt(e.target.value) || 0 })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dynamic HSL Hue Interactive Slider! */}
+                  <div className="bg-black/30 border border-border/60 p-4 rounded-xl space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-muted-foreground">Color Theme Hue: {modalDraft.hue ?? 0}°</label>
+                        <p className="text-[9px] text-muted-foreground">Drag to dynamically rotate the profile gradient colors</p>
+                      </div>
+                      {/* Avatar Dynamic HSL Theme Preview Circle */}
+                      <div 
+                        className="size-10 rounded-full border border-black/85 shadow-md flex items-center justify-center font-bold text-sm text-black select-none shrink-0 transition-all duration-150"
+                        style={{
+                          background: `linear-gradient(135deg, hsl(${modalDraft.hue || 0}, 80%, 60%), hsl(${(modalDraft.hue || 0) + 60}, 80%, 40%))`,
+                        }}
+                      >
+                        {modalDraft.name ? modalDraft.name.charAt(0).toUpperCase() : "?"}
+                      </div>
+                    </div>
+                    
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="360"
+                      value={modalDraft.hue ?? 0}
+                      onChange={(e) => setModalDraft({ ...modalDraft, hue: parseInt(e.target.value) || 0 })}
+                      className="w-full h-1.5 bg-black/60 rounded-lg appearance-none cursor-pointer accent-cyan"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Github Username</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.github || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, github: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Email Address</label>
+                      <input 
+                        type="email" 
+                        value={modalDraft.email || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, email: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Personal Website</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.website || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, website: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Avatar Image</label>
+                    <div className="flex items-center gap-4 bg-black/40 border border-border/80 p-3.5 rounded-xl">
+                      {modalDraft.avatar_url ? (
+                        <img src={modalDraft.avatar_url} alt="Avatar" className="size-16 object-cover rounded-full border border-border/80 bg-black" />
+                      ) : (
+                        <div 
+                          className="size-16 rounded-full border border-border/80 flex items-center justify-center font-bold text-lg text-black"
+                          style={{
+                            background: `linear-gradient(135deg, hsl(${modalDraft.hue || 0}, 80%, 60%), hsl(${(modalDraft.hue || 0) + 60}, 80%, 40%))`,
+                          }}
+                        >
+                          {modalDraft.name ? modalDraft.name.charAt(0).toUpperCase() : "?"}
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={() => triggerImageUpload(null, "avatar_url", true)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 hover:text-cyan border border-border text-[10px] uppercase font-bold rounded-lg tracking-wider transition-colors cursor-pointer"
+                        >
+                          <Upload className="size-3" /> Upload Avatar
+                        </button>
+                        <p className="text-[9px] text-muted-foreground">Upload high-res profile photo to Supabase storage.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Skills Array</label>
+                    <p className="text-[9px] text-muted-foreground mb-2">Use commas to separate skills (e.g. TypeScript, React, Docker, CI/CD, Python)</p>
+                    <input 
+                      type="text" 
+                      value={modalDraft.skills?.join(", ") || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, skills: e.target.value.split(",").map(s => s.trim()) })}
+                      placeholder="e.g. Next.js, Node.js, AWS"
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                    />
+                    
+                    {/* Live Skills Preview */}
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {modalDraft.skills && modalDraft.skills.filter((s: string) => s !== "").length > 0 ? (
+                        modalDraft.skills.filter((s: string) => s !== "").map((s: string) => (
+                          <span key={s} className="px-2.5 py-0.5 bg-white/5 border border-cyan/20 rounded text-[9px] text-cyan font-sans tracking-wide">
+                            {s}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/40 italic">No skills added yet</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Fun Fact</label>
+                    <input 
+                      type="text" 
+                      value={modalDraft.fun_fact || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, fun_fact: e.target.value })}
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Biography</label>
+                    <textarea 
+                      value={modalDraft.bio || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, bio: e.target.value })}
+                      rows={5}
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "services" && (
+                <div className="space-y-4 text-left">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Service Name</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.title || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, title: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Lucide Icon</label>
+                      <select
+                        value={modalDraft.icon || "Terminal"}
+                        onChange={(e) => setModalDraft({ ...modalDraft, icon: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all cursor-pointer font-sans"
+                      >
+                        {LUCIDE_ICONS.map((ico) => (
+                          <option key={ico} value={ico} className="bg-[#0c0d12]">
+                            {ico}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Description</label>
+                    <textarea 
+                      value={modalDraft.description || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, description: e.target.value })}
+                      rows={5}
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "categories" && (
+                <div className="space-y-4 text-left">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Category Name</label>
+                    <input 
+                      type="text" 
+                      value={modalDraft.name || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, name: e.target.value })}
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "achievements" && (
+                <div className="space-y-4 text-left">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Metric / Badge</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.metric || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, metric: e.target.value })}
+                        placeholder="e.g. 1st Place, 10+"
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Achievement Title</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.title || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, title: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Certificate Image</label>
+                    <div className="flex items-center gap-4 bg-black/40 border border-border/80 p-3.5 rounded-xl">
+                      {modalDraft.image_url ? (
+                        <img src={modalDraft.image_url} alt="Certificate" className="size-20 object-cover rounded border border-border/80 bg-black" />
+                      ) : (
+                        <div className="size-20 rounded border border-dashed border-border/60 bg-black flex items-center justify-center text-muted-foreground">
+                          <Image className="size-6" />
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={() => triggerImageUpload(null, "image_url", true)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 hover:text-cyan border border-border text-[10px] uppercase font-bold rounded-lg tracking-wider transition-colors cursor-pointer"
+                        >
+                          <Upload className="size-3" /> Upload Certificate
+                        </button>
+                        <p className="text-[9px] text-muted-foreground">Upload official trophy or certificate scan to Supabase storage.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Achievement Description</label>
+                    <textarea 
+                      value={modalDraft.description || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, description: e.target.value })}
+                      rows={5}
+                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer / Actions */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-border bg-card/40">
+              <button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingRowIndex(null);
+                  setModalDraft(null);
+                }}
+                className="px-4 py-2 border border-border hover:bg-white/5 hover:text-foreground text-xs text-muted-foreground font-bold uppercase rounded-lg tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveModalChanges}
+                className="px-4 py-2 bg-cyan text-black hover:bg-cyan/90 text-xs font-bold uppercase rounded-lg tracking-wider shadow-[0_0_15px_rgba(0,242,254,0.15)] transition-all cursor-pointer"
+              >
+                Apply Changes
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
