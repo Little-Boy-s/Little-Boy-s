@@ -10,7 +10,10 @@ export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
       { title: "Services — Little Boy's" },
-      { name: "description", content: "Web, backend, AI, testing and DevOps services from Little Boy's." },
+      {
+        name: "description",
+        content: "Web, backend, AI, testing and DevOps services from Little Boy's.",
+      },
       { property: "og:title", content: "Services — Little Boy's" },
       { property: "og:description", content: "Web, backend, AI, testing, DevOps." },
     ],
@@ -40,7 +43,9 @@ function Services() {
                   <Icon className="size-5" />
                 </div>
                 <h3 className="mt-4 font-bold text-lg">{s.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.description}</p>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  {s.description}
+                </p>
               </div>
             </Reveal>
           );

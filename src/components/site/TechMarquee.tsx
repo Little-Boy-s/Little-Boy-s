@@ -6,10 +6,8 @@ export function TechMarquee() {
     <div
       className="relative overflow-hidden border-y border-border bg-background/40"
       style={{
-        WebkitMaskImage:
-          "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
-        maskImage:
-          "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+        WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+        maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
       }}
     >
       <div className="marquee-track py-5">

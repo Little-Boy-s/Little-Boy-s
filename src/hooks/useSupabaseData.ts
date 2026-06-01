@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { projects as mockProjects, services as mockServices, Project, achievements as mockAchievements, Achievement } from "@/lib/site-data";
+import {
+  projects as mockProjects,
+  services as mockServices,
+  Project,
+  achievements as mockAchievements,
+  Achievement,
+} from "@/lib/site-data";
 import { builders as mockBuilders, Builder } from "@/lib/team-data";
 
 // Helper to map Supabase database projects (snake_case) to client Project types (camelCase)
@@ -64,7 +70,10 @@ export function useProjects() {
 
         return data.map(mapDbProject);
       } catch (err) {
-        console.warn("Failed to reach Supabase database for projects. Falling back to mock data.", err);
+        console.warn(
+          "Failed to reach Supabase database for projects. Falling back to mock data.",
+          err,
+        );
         return mockProjects;
       }
     },
@@ -100,7 +109,10 @@ export function useBuilders() {
 
         return data.map(mapDbBuilder);
       } catch (err) {
-        console.warn("Failed to reach Supabase database for builders. Falling back to mock data.", err);
+        console.warn(
+          "Failed to reach Supabase database for builders. Falling back to mock data.",
+          err,
+        );
         return mockBuilders;
       }
     },
@@ -143,7 +155,10 @@ export function useServices() {
 
         return data as Service[];
       } catch (err) {
-        console.warn("Failed to reach Supabase database for services. Falling back to mock data.", err);
+        console.warn(
+          "Failed to reach Supabase database for services. Falling back to mock data.",
+          err,
+        );
         return mockServices;
       }
     },
@@ -184,7 +199,10 @@ export function useCategories() {
           .order("name", { ascending: true });
 
         if (error) {
-          console.warn("Error fetching categories, falling back to mock categories:", error.message);
+          console.warn(
+            "Error fetching categories, falling back to mock categories:",
+            error.message,
+          );
           return mockCategories;
         }
 
@@ -195,7 +213,10 @@ export function useCategories() {
 
         return data as Category[];
       } catch (err) {
-        console.warn("Failed to reach Supabase database for categories. Falling back to mock data.", err);
+        console.warn(
+          "Failed to reach Supabase database for categories. Falling back to mock data.",
+          err,
+        );
         return mockCategories;
       }
     },
@@ -220,7 +241,10 @@ export function useAchievements() {
           .order("created_at", { ascending: true });
 
         if (error) {
-          console.warn("Error fetching achievements, falling back to mock achievements:", error.message);
+          console.warn(
+            "Error fetching achievements, falling back to mock achievements:",
+            error.message,
+          );
           return mockAchievements;
         }
 
@@ -232,7 +256,10 @@ export function useAchievements() {
           image_url: d.image_url || "",
         }));
       } catch (err) {
-        console.warn("Failed to reach Supabase database for achievements. Falling back to mock data.", err);
+        console.warn(
+          "Failed to reach Supabase database for achievements. Falling back to mock data.",
+          err,
+        );
         return mockAchievements;
       }
     },

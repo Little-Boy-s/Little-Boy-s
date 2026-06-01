@@ -46,20 +46,24 @@ function MemberCard({ b, onOpen }: { b: Builder; onOpen: () => void }) {
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="font-semibold truncate group-hover:text-neon transition-colors">
-            {b.name}
-          </p>
+          <p className="font-semibold truncate group-hover:text-neon transition-colors">{b.name}</p>
           <p className="font-mono text-[10px] uppercase tracking-wider text-cyan mt-0.5">
             {b.role}
           </p>
         </div>
         <div className="flex flex-wrap gap-1 shrink-0">
           {b.category ? (
-            b.category.split(",").map(c => c.trim()).map(cat => (
-              <span key={cat} className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0 bg-white/5">
-                {cat}
-              </span>
-            ))
+            b.category
+              .split(",")
+              .map((c) => c.trim())
+              .map((cat) => (
+                <span
+                  key={cat}
+                  className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0 bg-white/5"
+                >
+                  {cat}
+                </span>
+              ))
           ) : (
             <span className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0 bg-white/5">
               -
@@ -68,9 +72,7 @@ function MemberCard({ b, onOpen }: { b: Builder; onOpen: () => void }) {
         </div>
       </div>
 
-      <p className="mt-3 text-sm text-foreground/80 line-clamp-2">
-        {b.tagline}
-      </p>
+      <p className="mt-3 text-sm text-foreground/80 line-clamp-2">{b.tagline}</p>
 
       <div className="mt-3 flex items-center gap-3 text-[11px] font-mono text-muted-foreground">
         <span className="inline-flex items-center gap-1">
@@ -108,10 +110,7 @@ export function MemberDialog({ b }: { b: Builder }) {
   return (
     <DialogContent className="max-w-2xl bg-[oklch(0.17_0.012_260)] border-border text-foreground p-0 gap-0 block overflow-hidden max-h-[90vh] overflow-y-auto">
       {/* Header band */}
-      <div
-        className="relative h-32"
-        style={{ background: avatarBg(b.hue), opacity: 0.9 }}
-      >
+      <div className="relative h-32" style={{ background: avatarBg(b.hue), opacity: 0.9 }}>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[oklch(0.17_0.012_260)]" />
       </div>
 
@@ -133,11 +132,15 @@ export function MemberDialog({ b }: { b: Builder }) {
           )}
           <div className="pb-1 min-w-0">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-extrabold tracking-tight">
-                {b.name}
-              </DialogTitle>
+              <DialogTitle className="text-2xl font-extrabold tracking-tight">{b.name}</DialogTitle>
               <DialogDescription className="font-mono text-xs uppercase tracking-wider text-cyan mt-1">
-                {b.role} · {b.category ? b.category.split(",").map(c => c.trim()).join(" & ") : ""}
+                {b.role} ·{" "}
+                {b.category
+                  ? b.category
+                      .split(",")
+                      .map((c) => c.trim())
+                      .join(" & ")
+                  : ""}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -146,25 +149,19 @@ export function MemberDialog({ b }: { b: Builder }) {
         {/* Meta strip */}
         <div className="mt-5 grid grid-cols-3 gap-2 font-mono text-[11px]">
           <div className="rounded-lg bg-white/5 ring-1 ring-border px-3 py-2">
-            <p className="text-muted-foreground uppercase tracking-wider text-[9px]">
-              location
-            </p>
+            <p className="text-muted-foreground uppercase tracking-wider text-[9px]">location</p>
             <p className="mt-0.5 inline-flex items-center gap-1">
               <MapPin className="size-3 text-neon" /> {b.location}
             </p>
           </div>
           <div className="rounded-lg bg-white/5 ring-1 ring-border px-3 py-2">
-            <p className="text-muted-foreground uppercase tracking-wider text-[9px]">
-              experience
-            </p>
+            <p className="text-muted-foreground uppercase tracking-wider text-[9px]">experience</p>
             <p className="mt-0.5 inline-flex items-center gap-1">
               <Briefcase className="size-3 text-neon" /> {b.yearsExp} years
             </p>
           </div>
           <div className="rounded-lg bg-white/5 ring-1 ring-border px-3 py-2">
-            <p className="text-muted-foreground uppercase tracking-wider text-[9px]">
-              status
-            </p>
+            <p className="text-muted-foreground uppercase tracking-wider text-[9px]">status</p>
             <p className="mt-0.5 inline-flex items-center gap-1 text-neon">
               <span className="size-1.5 rounded-full bg-neon shadow-[0_0_8px_var(--neon)]" />
               shipping
@@ -177,19 +174,13 @@ export function MemberDialog({ b }: { b: Builder }) {
 
         {/* Bio */}
         <div className="mt-5">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">
-            // bio
-          </p>
-          <p className="mt-2 text-sm text-foreground/85 leading-relaxed">
-            {b.bio}
-          </p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">// bio</p>
+          <p className="mt-2 text-sm text-foreground/85 leading-relaxed">{b.bio}</p>
         </div>
 
         {/* Skills */}
         <div className="mt-5">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">
-            // skills
-          </p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">// skills</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {b.skills.map((s) => (
               <span
@@ -253,11 +244,17 @@ export function MemberDirectory() {
   const filters = useMemo(() => ["All", ...categories.map((c) => c.name)], [categories]);
 
   const filtered = useMemo(
-    () => (
+    () =>
       filter === "All"
         ? builders
-        : builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(filter))
-    ),
+        : builders.filter(
+            (b) =>
+              b.category &&
+              b.category
+                .split(",")
+                .map((c) => c.trim())
+                .includes(filter),
+          ),
     [filter, builders],
   );
 
@@ -270,7 +267,14 @@ export function MemberDirectory() {
           const count =
             f === "All"
               ? builders.length
-              : builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(f)).length;
+              : builders.filter(
+                  (b) =>
+                    b.category &&
+                    b.category
+                      .split(",")
+                      .map((c) => c.trim())
+                      .includes(f),
+                ).length;
           return (
             <button
               key={f}

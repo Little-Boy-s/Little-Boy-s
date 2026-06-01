@@ -8,7 +8,10 @@ export const Route = createFileRoute("/skills")({
   head: () => ({
     meta: [
       { title: "Stack — Little Boy's" },
-      { name: "description", content: "The technology stack used by Little Boy's on a daily basis." },
+      {
+        name: "description",
+        content: "The technology stack used by Little Boy's on a daily basis.",
+      },
       { property: "og:title", content: "Stack — Little Boy's" },
       { property: "og:description", content: "Tech stack of Little Boy's." },
     ],

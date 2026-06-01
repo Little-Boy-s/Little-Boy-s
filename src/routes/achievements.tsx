@@ -11,7 +11,10 @@ export const Route = createFileRoute("/achievements")({
       { title: "Achievements — Little Boy's" },
       { name: "description", content: "Team achievements, certificates, and milestones unlocked." },
       { property: "og:title", content: "Achievements — Little Boy's" },
-      { property: "og:description", content: "Milestones and certificates unlocked by Little Boy's." },
+      {
+        property: "og:description",
+        content: "Milestones and certificates unlocked by Little Boy's.",
+      },
     ],
   }),
   component: Achievements,
@@ -51,7 +54,8 @@ function Achievements() {
           {achievementsList.length === 0 ? (
             <Reveal delay={120}>
               <div className="text-center p-12 border border-dashed border-border rounded-2xl font-mono text-sm text-muted-foreground bg-card/20">
-                // No logged achievements found. Configure Supabase or import default mock data in admin.
+                // No logged achievements found. Configure Supabase or import default mock data in
+                admin.
               </div>
             </Reveal>
           ) : (
@@ -86,14 +90,14 @@ function Achievements() {
                   {/* Right Column: Optional certificate image upload preview */}
                   {item.image_url && (
                     <div className="shrink-0 flex items-center justify-center md:pl-4 mt-4 md:mt-0">
-                      <div 
+                      <div
                         onClick={() => setSelectedImage(item.image_url || null)}
                         className="relative rounded-xl overflow-hidden border border-border/60 bg-black/40 w-full md:w-44 h-28 cursor-pointer group/img"
                         title="Click to view full certificate"
                       >
-                        <img 
-                          src={item.image_url} 
-                          alt={item.title} 
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity duration-300">
@@ -113,12 +117,12 @@ function Achievements() {
 
       {/* Fullscreen Lightbox Modal */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 transition-all duration-300 animate-in fade-in"
           onClick={() => setSelectedImage(null)}
         >
           {/* Close button */}
-          <button 
+          <button
             onClick={() => setSelectedImage(null)}
             className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all shadow-xl z-50 cursor-pointer"
             title="Close certificate preview"
@@ -127,13 +131,13 @@ function Achievements() {
           </button>
 
           {/* Full size image stage */}
-          <div 
+          <div
             className="relative max-w-4xl max-h-[85vh] w-full flex items-center justify-center animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <img 
-              src={selectedImage} 
-              alt="Certificate Preview" 
+            <img
+              src={selectedImage}
+              alt="Certificate Preview"
               className="max-w-full max-h-[80vh] object-contain rounded-xl border border-border shadow-2xl bg-black/40"
             />
           </div>

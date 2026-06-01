@@ -4,10 +4,7 @@ import type { Project } from "@/lib/site-data";
 export function ProjectCard({ project }: { project: Project }) {
   return (
     <article className="group relative rounded-2xl bg-card/80 backdrop-blur border border-border overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-cyan/40 hover:shadow-[0_10px_50px_-12px_rgba(34,211,238,0.35)]">
-      <div
-        className="h-40 relative overflow-hidden"
-        style={{ background: project.accent }}
-      >
+      <div className="h-40 relative overflow-hidden" style={{ background: project.accent }}>
         <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:14px_14px] opacity-40" />
         <div className="absolute inset-0 flex items-center justify-center transition-all duration-700">
           {project.logo ? (
@@ -18,7 +15,10 @@ export function ProjectCard({ project }: { project: Project }) {
             />
           ) : (
             <span className="font-black text-4xl text-white/95 tracking-tight transition-transform duration-500 group-hover:scale-110">
-              {project.title.split(" ").map((w) => w[0]).join("")}
+              {project.title
+                .split(" ")
+                .map((w) => w[0])
+                .join("")}
             </span>
           )}
         </div>
@@ -44,9 +44,7 @@ export function ProjectCard({ project }: { project: Project }) {
             </a>
           </div>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          {project.description}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{project.description}</p>
         <div className="mt-4 flex flex-wrap gap-1.5">
           {project.stack.map((s) => (
             <span
