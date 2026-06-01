@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Globe, Server, Bot, TestTube, Workflow, Palette } from "lucide-react";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { Reveal } from "@/components/site/Reveal";
-import { services } from "@/lib/site-data";
+import { useServices } from "@/hooks/useSupabaseData";
 
 const ICONS = { Globe, Server, Bot, TestTube, Workflow, Palette } as const;
 
@@ -19,6 +19,7 @@ export const Route = createFileRoute("/services")({
 });
 
 function Services() {
+  const { data: services = [] } = useServices();
   return (
     <section className="mx-auto max-w-6xl px-5 pt-20 pb-10">
       <Reveal>

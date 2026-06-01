@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { ProjectCard } from "@/components/site/ProjectCard";
 import { Reveal } from "@/components/site/Reveal";
-import { projects } from "@/lib/site-data";
+import { useProjects } from "@/hooks/useSupabaseData";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({
@@ -17,6 +17,7 @@ export const Route = createFileRoute("/projects")({
 });
 
 function Projects() {
+  const { data: projects = [] } = useProjects();
   return (
     <section className="mx-auto max-w-6xl px-5 pt-20 pb-10">
       <Reveal>

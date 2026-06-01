@@ -3,7 +3,8 @@ import { Users, Github } from "lucide-react";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { MemberDirectory } from "@/components/site/MemberDirectory";
 import { Reveal } from "@/components/site/Reveal";
-import { builders, TEAM_FILTERS } from "@/lib/team-data";
+import { TEAM_FILTERS } from "@/lib/team-data";
+import { useBuilders } from "@/hooks/useSupabaseData";
 
 export const Route = createFileRoute("/team")({
   head: () => ({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/team")({
 });
 
 function TeamPage() {
+  const { data: builders = [] } = useBuilders();
   const counts = TEAM_FILTERS.filter((f) => f !== "All").map((f) => ({
     label: f,
     count: builders.filter((b) => b.category === f).length,
