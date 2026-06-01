@@ -33,6 +33,13 @@ function AdminDashboard() {
   // Private Password Protection Gate states
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+  const [isMockMode, setIsMockMode] = useState(() => {
+    if (!isSupabaseConfigured) return true;
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("admin_use_mock") === "true";
+    }
+    return false;
+  });
 
   // Fetch real data (falls back to mock automatically if not connected)
   const { data: projectsData } = useProjects();
@@ -80,6 +87,8 @@ function AdminDashboard() {
     const unlocked = sessionStorage.getItem("admin_unlocked");
     if (unlocked === "true") {
       setIsUnlocked(true);
+      const useMock = sessionStorage.getItem("admin_use_mock") === "true";
+      setIsMockMode(!isSupabaseConfigured || useMock);
     }
   }, []);
 
@@ -188,7 +197,9 @@ function AdminDashboard() {
       if (passwordInput === "admin123") {
         sessionStorage.setItem("admin_unlocked", "true");
         sessionStorage.setItem("admin_key", "admin123");
+        sessionStorage.setItem("admin_use_mock", "true");
         setIsUnlocked(true);
+        setIsMockMode(true);
         setPasswordInput("");
         toast.success("Console unlocked (Mock Mode). Welcome back, Administrator.");
       } else {
@@ -210,22 +221,53 @@ function AdminDashboard() {
       if (isValid) {
         sessionStorage.setItem("admin_unlocked", "true");
         sessionStorage.setItem("admin_key", passwordInput);
+        sessionStorage.removeItem("admin_use_mock");
         setIsUnlocked(true);
+        setIsMockMode(false);
         setPasswordInput("");
         toast.success("Console unlocked. Welcome back, Administrator.", { id: unlockToast });
       } else {
-        toast.error("Invalid password. Access Denied.", { id: unlockToast });
+        if (passwordInput === "admin123") {
+          sessionStorage.setItem("admin_unlocked", "true");
+          sessionStorage.setItem("admin_key", "admin123");
+          sessionStorage.setItem("admin_use_mock", "true");
+          setIsUnlocked(true);
+          setIsMockMode(true);
+          setPasswordInput("");
+          toast.success("Console unlocked (Mock Mode). Welcome back, Administrator.", { id: unlockToast });
+        } else {
+          toast.error("Invalid password. Access Denied.", { id: unlockToast });
+        }
       }
     } catch (err: any) {
       console.error("Verification failed:", err);
-      toast.error(`Authentication failed: ${err.message || "Failed to communicate with database"}. Make sure your SQL setup is up-to-date! Check the status or SQL setup.`, { id: unlockToast, duration: 6000 });
+      
+      const isNetworkError = err.message?.includes("fetch") || err.message?.includes("NetworkError") || err.name === "TypeError";
+      
+      if (isNetworkError && passwordInput === "admin123") {
+        sessionStorage.setItem("admin_unlocked", "true");
+        sessionStorage.setItem("admin_key", "admin123");
+        sessionStorage.setItem("admin_use_mock", "true");
+        setIsUnlocked(true);
+        setIsMockMode(true);
+        setPasswordInput("");
+        toast.success("Database unreachable. Unlocked in Mock Mode successfully!", { id: unlockToast });
+      } else {
+        const errorMsg = isNetworkError 
+          ? "Failed to connect to Supabase database. This is often caused by ISP blocks (common in Vietnam for supabase.co) or adblockers. Try using a VPN, changing your DNS to 1.1.1.1, or use the password 'admin123' to unlock Mock Mode."
+          : (err.message || "Failed to communicate with database");
+        
+        toast.error(`Authentication failed: ${errorMsg}`, { id: unlockToast, duration: 8000 });
+      }
     }
   };
 
   const handleLockConsole = () => {
     sessionStorage.removeItem("admin_unlocked");
     sessionStorage.removeItem("admin_key");
+    sessionStorage.removeItem("admin_use_mock");
     setIsUnlocked(false);
+    setIsMockMode(!isSupabaseConfigured);
     toast.warning("Console locked securely.");
   };
 
@@ -504,8 +546,8 @@ function AdminDashboard() {
     const file = e.target.files[0];
     const { rowIndex, field, isModal } = uploadingCell;
 
-    if (!isSupabaseConfigured) {
-      toast.error("Supabase is not configured yet! Setup credentials first.");
+    if (isMockMode) {
+      toast.error("Cannot upload images while in Mock Mode. Set up a working Supabase configuration to use storage.");
       setUploadingCell(null);
       return;
     }
@@ -556,8 +598,8 @@ function AdminDashboard() {
   // ================= SAVE DATA TO SUPABASE DATABASE =================
 
   const saveChanges = async () => {
-    if (!isSupabaseConfigured) {
-      toast.error("Cannot save changes. Supabase is not configured.");
+    if (isMockMode) {
+      toast.error("Cannot save changes while in Mock Mode. To save, please connect to a working Supabase database.");
       return;
     }
 
@@ -730,8 +772,8 @@ function AdminDashboard() {
   // ================= ONE-CLICK SEED DATABASE =================
 
   const seedDatabase = async () => {
-    if (!isSupabaseConfigured) {
-      toast.error("Please configure your .env.local keys first.");
+    if (isMockMode) {
+      toast.error("Cannot seed database while in Mock Mode. To seed, please connect to a working Supabase database.");
       return;
     }
 
@@ -1072,14 +1114,14 @@ FOR DELETE USING (
             <button
               onClick={() => setActiveTab(activeTab === "sql-setup" ? "projects" : "sql-setup")}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-[10px] uppercase tracking-wider cursor-pointer hover:opacity-80 transition-all ${
-                isSupabaseConfigured
+                !isMockMode
                   ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
                   : "bg-amber-950/40 border-amber-500/30 text-amber-400"
               }`}
               title="Click to toggle SQL Database Setup Instructions"
             >
               <Database className="size-3" />
-              {isSupabaseConfigured ? "Connected" : "Fallback Mode"}
+              {!isMockMode ? "Connected" : "Fallback Mode"}
             </button>
 
             <button
@@ -1092,16 +1134,28 @@ FOR DELETE USING (
           </div>
         </div>
 
-        {!isSupabaseConfigured && (
+        {isMockMode && (
           <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-5 mb-8 flex flex-col md:flex-row items-start gap-4 font-mono">
             <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg shrink-0">
               <HelpCircle className="size-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-amber-300">Supabase Credentials Missing</h3>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                The application is running in <strong>mock mode</strong>. Changes cannot be saved to the database. 
-                Please add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to your local <code>.env.local</code> file and restart your local dev server.
+              <h3 className="font-semibold text-amber-300">
+                {!isSupabaseConfigured ? "Supabase Credentials Missing" : "Supabase Database Offline / Unreachable"}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed text-left">
+                {!isSupabaseConfigured ? (
+                  <>
+                    The application is running in <strong>mock mode</strong>. Changes cannot be saved to the database. 
+                    Please add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to your local <code>.env.local</code> file and restart your local dev server.
+                  </>
+                ) : (
+                  <>
+                    The application is running in <strong>mock mode</strong> because the Supabase database is unreachable. 
+                    This is often caused by ISP blocks (common in Vietnam for <code>supabase.co</code>) or network problems. 
+                    Try using a VPN, changing your DNS to <code>1.1.1.1</code> or <code>8.8.8.8</code>, or check your connection to connect securely.
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -1163,7 +1217,7 @@ FOR DELETE USING (
 
               <button
                 onClick={seedDatabase}
-                disabled={isSeeding || !isSupabaseConfigured}
+                disabled={isSeeding || isMockMode}
                 className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#092d1c] border border-emerald-500/30 hover:bg-[#0c3e27] disabled:opacity-50 disabled:pointer-events-none text-emerald-400 text-xs font-mono rounded-md transition-colors"
               >
                 {isSeeding ? <Loader2 className="size-3.5 animate-spin" /> : <Database className="size-3.5" />}
@@ -1172,7 +1226,7 @@ FOR DELETE USING (
 
               <button
                 onClick={saveChanges}
-                disabled={isSaving || !isSupabaseConfigured}
+                disabled={isSaving || isMockMode}
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-neon hover:bg-neon/90 text-black font-mono font-bold text-xs rounded-md shadow-md shadow-neon/15 disabled:opacity-50 disabled:pointer-events-none transition-all"
               >
                 {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
