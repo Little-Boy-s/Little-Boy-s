@@ -1181,66 +1181,33 @@ FOR DELETE USING (
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
-                            onClick={() => handleCellClick(idx, "title")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "title" ? (
-                              <input
-                                autoFocus
-                                value={row.title || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "title")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.title || <span className="text-muted-foreground/40 italic">Double-click to edit</span>
-                            )}
+                            {row.title || <span className="text-muted-foreground/40 italic">Click to edit</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-xs"
-                            onClick={() => handleCellClick(idx, "description")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "description" ? (
-                              <textarea
-                                autoFocus
-                                value={row.description || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "description")}
-                                onBlur={handleCellBlur}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none min-h-[60px]"
-                              />
-                            ) : (
-                              row.description || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.description || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
-                            onClick={() => handleCellClick(idx, "stack")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "stack" ? (
-                              <input
-                                autoFocus
-                                value={row.stack?.join(", ") || ""}
-                                onChange={(e) => handleCellChange(e.target.value.split(",").map(s => s.trim()), idx, "stack")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                placeholder="Comma separated, e.g. React, Node"
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                {row.stack && row.stack.length > 0 ? (
-                                  row.stack.map((s: string) => (
-                                    <span key={s} className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground">
-                                      {s}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-muted-foreground/40 italic">Empty</span>
-                                )}
-                              </div>
-                            )}
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              {row.stack && row.stack.length > 0 ? (
+                                row.stack.map((s: string) => (
+                                  <span key={s} className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground">
+                                    {s}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-muted-foreground/40 italic">Empty</span>
+                              )}
+                            </div>
                           </td>
 
                           <td className="p-3 border-r border-border/30 select-none">
@@ -1254,7 +1221,7 @@ FOR DELETE USING (
                               )}
                               <button
                                 onClick={() => triggerImageUpload(idx, "logo_url")}
-                                className="p-1.5 bg-white/5 border border-border hover:bg-white/10 hover:text-neon rounded-md transition-colors"
+                                className="p-1.5 bg-white/5 border border-border hover:bg-white/10 hover:text-neon rounded-md transition-colors cursor-pointer"
                                 title="Upload Logo to Supabase Storage"
                               >
                                 <Upload className="size-3.5" />
@@ -1264,59 +1231,26 @@ FOR DELETE USING (
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-[150px]"
-                            onClick={() => handleCellClick(idx, "repo_url")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "repo_url" ? (
-                              <input
-                                autoFocus
-                                value={row.repo_url || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "repo_url")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.repo_url || <span className="text-muted-foreground/40 italic">Empty link</span>
-                            )}
+                            {row.repo_url || <span className="text-muted-foreground/40 italic">Empty link</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-[150px]"
-                            onClick={() => handleCellClick(idx, "live_url")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "live_url" ? (
-                              <input
-                                autoFocus
-                                value={row.live_url || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "live_url")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.live_url || <span className="text-muted-foreground/40 italic">Empty link</span>
-                            )}
+                            {row.live_url || <span className="text-muted-foreground/40 italic">Empty link</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
-                            onClick={() => handleCellClick(idx, "accent")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "accent" ? (
-                              <input
-                                autoFocus
-                                value={row.accent || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "accent")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              <span className="flex items-center gap-1.5 text-xs">
-                                <span className="size-3 rounded border border-border" style={{ background: row.accent }} />
-                                <span className="text-muted-foreground truncate max-w-[140px]">{row.accent || "Default color"}</span>
-                              </span>
-                            )}
+                            <span className="flex items-center gap-1.5 text-xs">
+                              <span className="size-3 rounded border border-border" style={{ background: row.accent }} />
+                              <span className="text-muted-foreground truncate max-w-[140px]">{row.accent || "Default color"}</span>
+                            </span>
                           </td>
 
                           <td className="p-3 text-center">
@@ -1382,52 +1316,25 @@ FOR DELETE USING (
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
-                            onClick={() => handleCellClick(idx, "name")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "name" ? (
-                              <input
-                                autoFocus
-                                value={row.name || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "name")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.name || <span className="text-muted-foreground/40 italic">Missing name</span>
-                            )}
+                            {row.name || <span className="text-muted-foreground/40 italic">Missing name</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
-                            onClick={() => handleCellClick(idx, "role")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "role" ? (
-                              <input
-                                autoFocus
-                                value={row.role || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "role")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.role || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.role || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td className="p-3 border-r border-border/30">
-                            <select
-                              value={row.category || "Fullstack"}
-                              onChange={(e) => handleCellChange(e.target.value, idx, "category")}
-                              className="w-full bg-black/60 border border-border/40 px-1.5 py-1 text-xs rounded text-foreground outline-none cursor-pointer font-mono"
-                            >
-                              {localCategories.map((cat) => (
-                                <option key={cat.id} value={cat.name} className="bg-[oklch(0.12_0.01_260)] text-foreground">
-                                  {cat.name}
-                                </option>
-                              ))}
-                            </select>
+                          <td 
+                            className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
+                            onClick={() => openEditorModal(idx)}
+                          >
+                            <span className="px-2 py-0.5 bg-white/5 border border-border rounded text-xs text-muted-foreground font-mono">
+                              {row.category || "Fullstack"}
+                            </span>
                           </td>
 
                           <td className="p-3 border-r border-border/30 select-none">
@@ -1447,7 +1354,7 @@ FOR DELETE USING (
                               )}
                               <button
                                 onClick={() => triggerImageUpload(idx, "avatar_url")}
-                                className="p-1.5 bg-white/5 border border-border hover:bg-white/10 hover:text-neon rounded-md transition-colors"
+                                className="p-1.5 bg-white/5 border border-border hover:bg-white/10 hover:text-neon rounded-md transition-colors cursor-pointer"
                                 title="Upload Custom Avatar Image to Storage"
                               >
                                 <Upload className="size-3.5" />
@@ -1457,199 +1364,84 @@ FOR DELETE USING (
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 text-center"
-                            onClick={() => handleCellClick(idx, "hue")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "hue" ? (
-                              <input
-                                autoFocus
-                                type="number"
-                                min={0}
-                                max={360}
-                                value={row.hue ?? 0}
-                                onChange={(e) => handleCellChange(parseInt(e.target.value) || 0, idx, "hue")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-16 bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-center text-foreground outline-none"
-                              />
-                            ) : (
-                              row.hue ?? 0
-                            )}
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] text-black font-bold tracking-wide font-sans" style={{ background: `hsl(${row.hue || 0}, 85%, 60%)` }}>
+                              {row.hue ?? 0}°
+                            </span>
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-xs truncate"
-                            onClick={() => handleCellClick(idx, "tagline")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "tagline" ? (
-                              <input
-                                autoFocus
-                                value={row.tagline || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "tagline")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.tagline || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.tagline || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
-                            onClick={() => handleCellClick(idx, "location")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "location" ? (
-                              <input
-                                autoFocus
-                                value={row.location || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "location")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.location || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.location || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 text-center"
-                            onClick={() => handleCellClick(idx, "years_exp")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "years_exp" ? (
-                              <input
-                                autoFocus
-                                type="number"
-                                min={0}
-                                max={50}
-                                value={row.years_exp ?? 0}
-                                onChange={(e) => handleCellChange(parseInt(e.target.value) || 0, idx, "years_exp")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-12 bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-center text-foreground outline-none"
-                              />
-                            ) : (
-                              row.years_exp ?? 0
-                            )}
+                            {row.years_exp ?? 0} yrs
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-xs"
-                            onClick={() => handleCellClick(idx, "bio")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "bio" ? (
-                              <textarea
-                                autoFocus
-                                value={row.bio || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "bio")}
-                                onBlur={handleCellBlur}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none min-h-[60px]"
-                              />
-                            ) : (
-                              row.bio || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.bio || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
-                            onClick={() => handleCellClick(idx, "skills")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "skills" ? (
-                              <input
-                                autoFocus
-                                value={row.skills?.join(", ") || ""}
-                                onChange={(e) => handleCellChange(e.target.value.split(",").map(s => s.trim()), idx, "skills")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                placeholder="e.g. React, CSS"
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                {row.skills && row.skills.length > 0 ? (
-                                  row.skills.map((s: string) => (
-                                    <span key={s} className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground">
-                                      {s}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-muted-foreground/40 italic">Empty</span>
-                                )}
-                              </div>
-                            )}
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              {row.skills && row.skills.length > 0 ? (
+                                row.skills.map((s: string) => (
+                                  <span key={s} className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground">
+                                    {s}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-muted-foreground/40 italic">Empty</span>
+                              )}
+                            </div>
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-xs truncate"
-                            onClick={() => handleCellClick(idx, "fun_fact")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "fun_fact" ? (
-                              <input
-                                autoFocus
-                                value={row.fun_fact || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "fun_fact")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.fun_fact || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.fun_fact || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
-                            onClick={() => handleCellClick(idx, "github")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "github" ? (
-                              <input
-                                autoFocus
-                                value={row.github || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "github")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.github || <span className="text-muted-foreground/40 italic">Empty link</span>
-                            )}
+                            {row.github || <span className="text-muted-foreground/40 italic">Empty link</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
-                            onClick={() => handleCellClick(idx, "email")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "email" ? (
-                              <input
-                                autoFocus
-                                type="email"
-                                value={row.email || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "email")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.email || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.email || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
-                            onClick={() => handleCellClick(idx, "website")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "website" ? (
-                              <input
-                                autoFocus
-                                value={row.website || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "website")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.website || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.website || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td className="p-3 text-center">
@@ -1704,51 +1496,25 @@ FOR DELETE USING (
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
-                            onClick={() => handleCellClick(idx, "title")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "title" ? (
-                              <input
-                                autoFocus
-                                value={row.title || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "title")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.title || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.title || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-sm"
-                            onClick={() => handleCellClick(idx, "description")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "description" ? (
-                              <textarea
-                                autoFocus
-                                value={row.description || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "description")}
-                                onBlur={handleCellBlur}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none min-h-[60px]"
-                              />
-                            ) : (
-                              row.description || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.description || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td className="p-3 border-r border-border/30">
-                            <select
-                              value={row.icon || "Terminal"}
-                              onChange={(e) => handleCellChange(e.target.value, idx, "icon")}
-                              className="w-full bg-black/60 border border-border/40 px-1.5 py-1 rounded text-foreground outline-none cursor-pointer"
-                            >
-                              {LUCIDE_ICONS.map((ico) => (
-                                <option key={ico} value={ico} className="bg-[oklch(0.12_0.01_260)] text-foreground">
-                                  {ico}
-                                </option>
-                              ))}
-                            </select>
+                          <td 
+                            className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
+                            onClick={() => openEditorModal(idx)}
+                          >
+                            <span className="px-2 py-0.5 bg-white/5 border border-border rounded text-xs text-muted-foreground font-mono">
+                              {row.icon || "Terminal"}
+                            </span>
                           </td>
 
                           <td className="p-3 text-center">
@@ -1801,20 +1567,9 @@ FOR DELETE USING (
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
-                            onClick={() => handleCellClick(idx, "name")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "name" ? (
-                              <input
-                                autoFocus
-                                value={row.name || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "name")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.name || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.name || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td className="p-3 text-center">
@@ -1870,55 +1625,23 @@ FOR DELETE USING (
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold text-cyan"
-                            onClick={() => handleCellClick(idx, "metric")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "metric" ? (
-                              <input
-                                autoFocus
-                                value={row.metric || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "metric")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.metric || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.metric || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
-                            onClick={() => handleCellClick(idx, "title")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "title" ? (
-                              <input
-                                autoFocus
-                                value={row.title || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "title")}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none"
-                              />
-                            ) : (
-                              row.title || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.title || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-sm"
-                            onClick={() => handleCellClick(idx, "description")}
+                            onClick={() => openEditorModal(idx)}
                           >
-                            {editingCell?.rowIndex === idx && editingCell?.field === "description" ? (
-                              <textarea
-                                autoFocus
-                                value={row.description || ""}
-                                onChange={(e) => handleCellChange(e.target.value, idx, "description")}
-                                onBlur={handleCellBlur}
-                                className="w-full bg-black/60 border border-neon/50 px-1 py-0.5 rounded text-foreground outline-none min-h-[60px]"
-                              />
-                            ) : (
-                              row.description || <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.description || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td className="p-3 border-r border-border/30 select-none">
