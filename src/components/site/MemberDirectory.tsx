@@ -7,7 +7,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { builders, TEAM_FILTERS, type Builder } from "@/lib/team-data";
+import { TEAM_FILTERS, type Builder } from "@/lib/team-data";
+import { useBuilders } from "@/hooks/useSupabaseData";
 
 function initials(name: string) {
   return name
@@ -30,12 +31,20 @@ function MemberCard({ b, onOpen }: { b: Builder; onOpen: () => void }) {
       className="group text-left rounded-2xl border border-border bg-card/60 backdrop-blur p-5 transition-all hover:-translate-y-1 hover:border-neon/50 hover:shadow-[0_12px_40px_-12px_rgba(57,255,128,0.35)] cursor-pointer"
     >
       <div className="flex items-start gap-3">
-        <span
-          className="size-12 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 ring-1 ring-border"
-          style={{ background: avatarBg(b.hue) }}
-        >
-          {initials(b.name)}
-        </span>
+        {b.avatarUrl ? (
+          <img
+            src={b.avatarUrl}
+            alt={b.name}
+            className="size-12 rounded-xl object-cover shrink-0 ring-1 ring-border"
+          />
+        ) : (
+          <span
+            className="size-12 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 ring-1 ring-border"
+            style={{ background: avatarBg(b.hue) }}
+          >
+            {initials(b.name)}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="font-semibold truncate group-hover:text-neon transition-colors">
             {b.name}
@@ -98,12 +107,20 @@ export function MemberDialog({ b }: { b: Builder }) {
 
       <div className="px-6 pb-6 -mt-12 relative">
         <div className="flex items-end gap-4">
-          <span
-            className="size-24 rounded-2xl flex items-center justify-center text-2xl font-bold text-white ring-4 ring-[oklch(0.17_0.012_260)] shadow-xl shrink-0"
-            style={{ background: avatarBg(b.hue) }}
-          >
-            {initials(b.name)}
-          </span>
+          {b.avatarUrl ? (
+            <img
+              src={b.avatarUrl}
+              alt={b.name}
+              className="size-24 rounded-2xl object-cover ring-4 ring-[oklch(0.17_0.012_260)] shadow-xl shrink-0"
+            />
+          ) : (
+            <span
+              className="size-24 rounded-2xl flex items-center justify-center text-2xl font-bold text-white ring-4 ring-[oklch(0.17_0.012_260)] shadow-xl shrink-0"
+              style={{ background: avatarBg(b.hue) }}
+            >
+              {initials(b.name)}
+            </span>
+          )}
           <div className="pb-1 min-w-0">
             <DialogHeader>
               <DialogTitle className="text-2xl font-extrabold tracking-tight">
@@ -218,12 +235,13 @@ export function MemberDialog({ b }: { b: Builder }) {
 }
 
 export function MemberDirectory() {
+  const { data: builders = [] } = useBuilders();
   const [filter, setFilter] = useState<(typeof TEAM_FILTERS)[number]>("All");
   const [active, setActive] = useState<Builder | null>(null);
 
   const filtered = useMemo(
     () => (filter === "All" ? builders : builders.filter((b) => b.category === filter)),
-    [filter],
+    [filter, builders],
   );
 
   return (

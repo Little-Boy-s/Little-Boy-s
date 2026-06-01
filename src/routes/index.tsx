@@ -7,8 +7,9 @@ import { TechMarquee } from "@/components/site/TechMarquee";
 import { TeamGrid } from "@/components/site/TeamGrid";
 import { Reveal } from "@/components/site/Reveal";
 import { TerminalTyping } from "@/components/site/TerminalTyping";
-import { projects, expertise } from "@/lib/site-data";
-import { builders } from "@/lib/team-data";
+import { expertise } from "@/lib/site-data";
+import { useProjects, useBuilders } from "@/hooks/useSupabaseData";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,6 +38,9 @@ const COMMANDS = [
 ];
 
 function Home() {
+  const { data: projects = [] } = useProjects();
+  const { data: builders = [] } = useBuilders();
+
   return (
     <>
       {/* ===== Hero — terminal + logo as artifact ===== */}

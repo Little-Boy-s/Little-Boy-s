@@ -6,7 +6,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { builders, TEAM_FILTERS, type Builder } from "@/lib/team-data";
+import { TEAM_FILTERS, type Builder } from "@/lib/team-data";
+import { useBuilders } from "@/hooks/useSupabaseData";
 import { Dialog } from "@/components/ui/dialog";
 import { MemberDialog } from "@/components/site/MemberDirectory";
 
@@ -33,12 +34,20 @@ function Avatar({ b, onOpen }: { b: Builder; onOpen: () => void }) {
           aria-label={`${b.name} — ${b.role}`}
           className="group relative block cursor-pointer"
         >
-          <span
-            className="block size-12 sm:size-14 rounded-full ring-2 ring-border transition-all duration-200 group-hover:ring-cyan group-hover:-translate-y-1 group-hover:shadow-[0_10px_24px_-8px_rgba(34,211,238,0.55)] flex items-center justify-center text-[11px] sm:text-xs font-bold text-white"
-            style={{ background: avatarBg(b.hue) }}
-          >
-            {initials(b.name)}
-          </span>
+          {b.avatarUrl ? (
+            <img
+              src={b.avatarUrl}
+              alt={b.name}
+              className="block size-12 sm:size-14 rounded-full object-cover ring-2 ring-border transition-all duration-200 group-hover:ring-cyan group-hover:-translate-y-1 group-hover:shadow-[0_10px_24px_-8px_rgba(34,211,238,0.55)] shrink-0"
+            />
+          ) : (
+            <span
+              className="block size-12 sm:size-14 rounded-full ring-2 ring-border transition-all duration-200 group-hover:ring-cyan group-hover:-translate-y-1 group-hover:shadow-[0_10px_24px_-8px_rgba(34,211,238,0.55)] flex items-center justify-center text-[11px] sm:text-xs font-bold text-white shrink-0"
+              style={{ background: avatarBg(b.hue) }}
+            >
+              {initials(b.name)}
+            </span>
+          )}
           <span
             aria-hidden
             className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-400 ring-2 ring-background opacity-0 group-hover:opacity-100 transition-opacity"
@@ -50,12 +59,20 @@ function Avatar({ b, onOpen }: { b: Builder; onOpen: () => void }) {
         className="bg-card text-foreground border border-border shadow-xl rounded-lg px-3 py-2"
       >
         <div className="flex items-center gap-2.5 min-w-[180px]">
-          <span
-            className="size-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-            style={{ background: avatarBg(b.hue) }}
-          >
-            {initials(b.name)}
-          </span>
+          {b.avatarUrl ? (
+            <img
+              src={b.avatarUrl}
+              alt={b.name}
+              className="size-9 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <span
+              className="size-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+              style={{ background: avatarBg(b.hue) }}
+            >
+              {initials(b.name)}
+            </span>
+          )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate">{b.name}</p>
             <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">
@@ -70,12 +87,13 @@ function Avatar({ b, onOpen }: { b: Builder; onOpen: () => void }) {
 }
 
 export function TeamGrid() {
+  const { data: builders = [] } = useBuilders();
   const [filter, setFilter] = useState<(typeof TEAM_FILTERS)[number]>("All");
   const [active, setActive] = useState<Builder | null>(null);
 
   const filtered = useMemo(
     () => (filter === "All" ? builders : builders.filter((b) => b.category === filter)),
-    [filter],
+    [filter, builders],
   );
 
   return (
