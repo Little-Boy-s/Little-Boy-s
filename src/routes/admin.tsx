@@ -147,6 +147,7 @@ function AdminDashboard() {
           fun_fact: b.funFact,
           email: b.email || "",
           website: b.website || "",
+          avatar_url: b.avatarUrl || "",
         }))
       );
     }
@@ -692,6 +693,7 @@ function AdminDashboard() {
             fun_fact: b.fun_fact,
             email: b.email,
             website: b.website,
+            avatar_url: b.avatar_url,
           };
           if (!b.id.startsWith("new-") && !b.id.startsWith("temp-")) {
             item.id = b.id;
