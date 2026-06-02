@@ -8,7 +8,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured, setSupabaseAdminKey } from "@/lib/supabase";
 import { useProjects, useBuilders, useServices, useCategories, useAchievements } from "@/hooks/useSupabaseData";
-import { projects as mockProjects, achievements as mockAchievements } from "@/lib/site-data";
+import { projects as mockProjects, achievements as mockAchievements, services as mockServices } from "@/lib/site-data";
 import { builders as mockBuilders } from "@/lib/team-data";
 import { toast } from "sonner";
 
@@ -609,7 +609,28 @@ function AdminDashboard() {
 
   const saveChanges = async () => {
     if (isMockMode) {
-      toast.error("Cannot save changes while in Mock Mode. To save, please connect to a working Supabase database.");
+      const saveToast = toast.loading("Saving changes locally...");
+      try {
+        if (activeTab === "projects") {
+          localStorage.setItem("portfolio_mock_projects", JSON.stringify(localProjects));
+          queryClient.invalidateQueries({ queryKey: ["projects"] });
+        } else if (activeTab === "builders") {
+          localStorage.setItem("portfolio_mock_builders", JSON.stringify(localBuilders));
+          queryClient.invalidateQueries({ queryKey: ["builders"] });
+        } else if (activeTab === "services") {
+          localStorage.setItem("portfolio_mock_services", JSON.stringify(localServices));
+          queryClient.invalidateQueries({ queryKey: ["services"] });
+        } else if (activeTab === "categories") {
+          localStorage.setItem("portfolio_mock_categories", JSON.stringify(localCategories));
+          queryClient.invalidateQueries({ queryKey: ["categories"] });
+        } else if (activeTab === "achievements") {
+          localStorage.setItem("portfolio_mock_achievements", JSON.stringify(localAchievements));
+          queryClient.invalidateQueries({ queryKey: ["achievements"] });
+        }
+        toast.success("Changes saved locally in Mock Mode!", { id: saveToast });
+      } catch (err: any) {
+        toast.error(`Local save failed: ${err.message}`, { id: saveToast });
+      }
       return;
     }
 
@@ -783,7 +804,99 @@ function AdminDashboard() {
 
   const seedDatabase = async () => {
     if (isMockMode) {
-      toast.error("Cannot seed database while in Mock Mode. To seed, please connect to a working Supabase database.");
+      const confirm = window.confirm(
+        "This will reset all your mock data in local storage back to starting defaults. Continue?"
+      );
+      if (!confirm) return;
+
+      setIsSeeding(true);
+      const seedToast = toast.loading("Resetting mock data to defaults...");
+      try {
+        localStorage.removeItem("portfolio_mock_projects");
+        localStorage.removeItem("portfolio_mock_builders");
+        localStorage.removeItem("portfolio_mock_services");
+        localStorage.removeItem("portfolio_mock_categories");
+        localStorage.removeItem("portfolio_mock_achievements");
+
+        // Sync local states back to defaults
+        setLocalProjects(
+          mockProjects.map((p, idx) => ({
+            id: `temp-p-${idx}`,
+            title: p.title,
+            description: p.description,
+            stack: p.stack,
+            repo_url: p.repoUrl,
+            live_url: p.liveUrl,
+            accent: p.accent,
+            logo_url: p.logo || "",
+          }))
+        );
+
+        setLocalBuilders(
+          mockBuilders.map((b, idx) => ({
+            id: `temp-b-${idx}`,
+            name: b.name,
+            role: b.role,
+            category: b.category,
+            github: b.github,
+            hue: b.hue,
+            tagline: b.tagline,
+            location: b.location,
+            years_exp: b.yearsExp,
+            bio: b.bio,
+            skills: b.skills,
+            fun_fact: b.funFact,
+            email: b.email || "",
+            website: b.website || "",
+          }))
+        );
+
+        setLocalServices(
+          mockServices.map((s, idx) => ({
+            id: `temp-s-${idx}`,
+            title: s.title,
+            description: s.description,
+            icon: s.icon,
+          }))
+        );
+
+        setLocalCategories(
+          [
+            { name: "Frontend" },
+            { name: "Backend" },
+            { name: "Fullstack" },
+            { name: "AI" },
+            { name: "DevOps" },
+            { name: "Mobile" },
+            { name: "Design" },
+          ].map((c, idx) => ({
+            id: `temp-c-${idx}`,
+            name: c.name,
+          }))
+        );
+
+        setLocalAchievements(
+          mockAchievements.map((a, idx) => ({
+            id: `temp-a-${idx}`,
+            metric: a.metric,
+            title: a.title,
+            description: a.description,
+            image_url: a.image_url || "",
+          }))
+        );
+
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+        queryClient.invalidateQueries({ queryKey: ["builders"] });
+        queryClient.invalidateQueries({ queryKey: ["services"] });
+        queryClient.invalidateQueries({ queryKey: ["categories"] });
+        queryClient.invalidateQueries({ queryKey: ["achievements"] });
+
+        toast.success("Mock data reset to defaults successfully!", { id: seedToast });
+      } catch (err: any) {
+        toast.error(`Reset failed: ${err.message}`, { id: seedToast });
+      } finally {
+        setIsSeeding(false);
+      }
       return;
     }
 
@@ -1227,20 +1340,20 @@ FOR DELETE USING (
 
               <button
                 onClick={seedDatabase}
-                disabled={isSeeding || isMockMode}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#092d1c] border border-emerald-500/30 hover:bg-[#0c3e27] disabled:opacity-50 disabled:pointer-events-none text-emerald-400 text-xs font-mono rounded-md transition-colors"
+                disabled={isSeeding}
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#092d1c] border border-emerald-500/30 hover:bg-[#0c3e27] disabled:opacity-50 disabled:pointer-events-none text-emerald-400 text-xs font-mono rounded-md transition-colors cursor-pointer"
               >
                 {isSeeding ? <Loader2 className="size-3.5 animate-spin" /> : <Database className="size-3.5" />}
-                Import Defaults
+                {isMockMode ? "Reset Defaults" : "Import Defaults"}
               </button>
 
               <button
                 onClick={saveChanges}
-                disabled={isSaving || isMockMode}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-neon hover:bg-neon/90 text-black font-mono font-bold text-xs rounded-md shadow-md shadow-neon/15 disabled:opacity-50 disabled:pointer-events-none transition-all"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-neon hover:bg-neon/90 text-black font-mono font-bold text-xs rounded-md shadow-md shadow-neon/15 disabled:opacity-50 disabled:pointer-events-none transition-all cursor-pointer"
               >
                 {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-                Sync Database
+                {isMockMode ? "Save Changes" : "Sync Database"}
               </button>
             </div>
           )}
