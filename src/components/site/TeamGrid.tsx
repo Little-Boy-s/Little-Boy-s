@@ -1,11 +1,6 @@
 import { useMemo, useState } from "react";
 import { Github } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Builder } from "@/lib/team-data";
 import { useBuilders, useCategories } from "@/hooks/useSupabaseData";
 import { Dialog } from "@/components/ui/dialog";
@@ -75,9 +70,7 @@ function Avatar({ b, onOpen }: { b: Builder; onOpen: () => void }) {
           )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate">{b.name}</p>
-            <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">
-              {b.role}
-            </p>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">{b.role}</p>
           </div>
           <Github className="size-3.5 text-muted-foreground" />
         </div>
