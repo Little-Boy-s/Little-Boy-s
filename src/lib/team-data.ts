@@ -18,6 +18,7 @@ export type Builder = {
   email?: string;
   website?: string;
   avatarUrl?: string;
+  aka?: string;
 };
 
 type Row = [string, string, string, string, string, number, string, string[], string];
@@ -44,6 +45,7 @@ export const builders: Builder[] = ROWS.map(
     email: name === "Võ Đức Hiếu" ? "voduchieu42@gmail.com" : "hieuvd@littleboy.com",
     website: name === "Võ Đức Hiếu" ? "https://h1eudayne.dev/" : undefined,
     hue: (i * 47) % 360,
+    aka: name === "Võ Đức Hiếu" ? "Little Boy" : undefined,
   }),
 );
 

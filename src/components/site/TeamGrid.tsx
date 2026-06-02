@@ -74,7 +74,9 @@ function Avatar({ b, onOpen }: { b: Builder; onOpen: () => void }) {
             </span>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{b.name}</p>
+            <p className="font-semibold text-sm truncate">
+              {b.name} {b.aka && <span className="text-[10px] text-muted-foreground font-normal">({b.aka})</span>}
+            </p>
             <p className="font-mono text-[10px] uppercase tracking-wider text-cyan">
               {b.role}
             </p>

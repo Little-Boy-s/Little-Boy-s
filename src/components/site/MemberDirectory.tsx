@@ -47,7 +47,7 @@ function MemberCard({ b, onOpen }: { b: Builder; onOpen: () => void }) {
         )}
         <div className="min-w-0 flex-1">
           <p className="font-semibold truncate group-hover:text-neon transition-colors">
-            {b.name}
+            {b.name} {b.aka && <span className="text-xs text-muted-foreground font-normal">({b.aka})</span>}
           </p>
           <p className="font-mono text-[10px] uppercase tracking-wider text-cyan mt-0.5">
             {b.role}
@@ -134,7 +134,7 @@ export function MemberDialog({ b }: { b: Builder }) {
           <div className="pb-1 min-w-0">
             <DialogHeader>
               <DialogTitle className="text-2xl font-extrabold tracking-tight">
-                {b.name}
+                {b.name} {b.aka && <span className="text-sm text-muted-foreground font-mono font-normal">aka {b.aka}</span>}
               </DialogTitle>
               <DialogDescription className="font-mono text-xs uppercase tracking-wider text-cyan mt-1">
                 {b.role} · {b.category ? b.category.split(",").map(c => c.trim()).join(" & ") : ""}

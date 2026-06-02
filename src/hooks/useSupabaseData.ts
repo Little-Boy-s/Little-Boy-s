@@ -58,6 +58,7 @@ function mapDbBuilder(dbBuilder: any): Builder {
     email: dbBuilder.email || undefined,
     website: dbBuilder.website || undefined,
     avatarUrl: dbBuilder.avatar_url || dbBuilder.avatarUrl || undefined,
+    aka: dbBuilder.aka || "",
   };
 }
 

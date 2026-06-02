@@ -148,6 +148,7 @@ function AdminDashboard() {
           email: b.email || "",
           website: b.website || "",
           avatar_url: b.avatarUrl || "",
+          aka: b.aka || "",
         }))
       );
     }
@@ -707,6 +708,7 @@ function AdminDashboard() {
             email: b.email,
             website: b.website,
             avatar_url: b.avatar_url,
+            aka: b.aka,
           };
           if (!b.id.startsWith("new-") && !b.id.startsWith("temp-")) {
             item.id = b.id;
@@ -900,6 +902,7 @@ function AdminDashboard() {
             fun_fact: b.funFact,
             email: b.email || "",
             website: b.website || "",
+            aka: b.aka || "",
           }))
         );
 
@@ -1002,6 +1005,7 @@ function AdminDashboard() {
         fun_fact: b.funFact,
         email: b.email,
         website: b.website,
+        aka: b.aka,
       }));
       const { error: bErr } = await supabase.from("builders").upsert(builderRows);
       if (bErr) throw bErr;
@@ -1056,6 +1060,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
 CREATE TABLE IF NOT EXISTS public.builders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
+    aka TEXT,
     role TEXT,
     category TEXT,
     github TEXT,
@@ -1580,6 +1585,7 @@ FOR DELETE USING (
                     <tr className="bg-card border-b border-border/80 text-muted-foreground text-left select-none">
                       <th className="p-3 border-r border-border/40 w-12 text-center">No.</th>
                       <th className="p-3 border-r border-border/40 w-44">Name</th>
+                      <th className="p-3 border-r border-border/40 w-36">Nickname (aka)</th>
                       <th className="p-3 border-r border-border/40 w-44">Role / Title</th>
                       <th className="p-3 border-r border-border/40 w-36">Category</th>
                       <th className="p-3 border-r border-border/40 w-32">Avatar / Storage</th>
@@ -1599,7 +1605,7 @@ FOR DELETE USING (
                   <tbody>
                     {localBuilders.length === 0 ? (
                       <tr>
-                        <td colSpan={16} className="p-8 text-center text-muted-foreground select-none">
+                        <td colSpan={17} className="p-8 text-center text-muted-foreground select-none">
                           No team builders. Click "Add Row" or "Import Defaults" to populate the grid.
                         </td>
                       </tr>
@@ -1615,6 +1621,13 @@ FOR DELETE USING (
                             onClick={() => openEditorModal(idx)}
                           >
                             {row.name || <span className="text-muted-foreground/40 italic">Missing name</span>}
+                          </td>
+
+                          <td 
+                            className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
+                            onClick={() => openEditorModal(idx)}
+                          >
+                            {row.aka || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td 
@@ -2285,7 +2298,19 @@ FOR DELETE USING (
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Categories (Multiple allowed)</label>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Nickname (aka)</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.aka || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, aka: e.target.value })}
+                        placeholder="e.g. Little Boy"
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Categories (Multiple allowed)</label>
                       <div className="flex flex-wrap gap-1.5 p-2 bg-black/40 border border-border rounded-lg max-h-[140px] overflow-y-auto">
                         {localCategories.map((cat) => {
                           const activeCategories = modalDraft.category 
@@ -2319,7 +2344,6 @@ FOR DELETE USING (
                           );
                         })}
                       </div>
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
