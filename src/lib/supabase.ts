@@ -28,20 +28,28 @@ export const supabase = createClient(
     }
   }
 );
-
-// Dynamic helper to update both REST and Storage headers since Supabase deep-copies options at init time
+// Dynamic helper to update both REST and Storage headers safely since Supabase deep-copies options at init time
 export function setSupabaseAdminKey(key: string) {
   if (!supabase) return;
   
-  if ((supabase as any).rest?.headers) {
-    (supabase as any).rest.headers["x-admin-key"] = key;
+  const restHeaders = (supabase as any).rest?.headers;
+  if (restHeaders) {
+    if (typeof restHeaders.set === "function") {
+      restHeaders.set("x-admin-key", key);
+    } else {
+      restHeaders["x-admin-key"] = key;
+    }
   }
   
-  if ((supabase as any).storage?.headers) {
-    (supabase as any).storage.headers["x-admin-key"] = key;
+  const storageHeaders = (supabase as any).storage?.headers;
+  if (storageHeaders) {
+    if (typeof storageHeaders.set === "function") {
+      storageHeaders.set("x-admin-key", key);
+    } else {
+      storageHeaders["x-admin-key"] = key;
+    }
   }
 }
-
 // Auto-restore admin key from sessionStorage on initial load/refresh
 if (typeof window !== "undefined") {
   const savedKey = sessionStorage.getItem("admin_key");
