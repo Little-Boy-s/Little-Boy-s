@@ -646,7 +646,10 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localProjects.map((p) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localProjects.forEach((p) => {
           const item: any = {
             title: p.title,
             description: p.description,
@@ -658,9 +661,16 @@ function AdminDashboard() {
           };
           if (!p.id.startsWith("new-") && !p.id.startsWith("temp-")) {
             item.id = p.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("projects").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("projects").upsert(upsertRows);
@@ -678,7 +688,10 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localBuilders.map((b) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localBuilders.forEach((b) => {
           const item: any = {
             name: b.name,
             role: b.role,
@@ -697,9 +710,16 @@ function AdminDashboard() {
           };
           if (!b.id.startsWith("new-") && !b.id.startsWith("temp-")) {
             item.id = b.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("builders").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("builders").upsert(upsertRows);
@@ -717,7 +737,10 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localServices.map((s) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localServices.forEach((s) => {
           const item: any = {
             title: s.title,
             description: s.description,
@@ -725,9 +748,16 @@ function AdminDashboard() {
           };
           if (!s.id.startsWith("new-") && !s.id.startsWith("temp-")) {
             item.id = s.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("services").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("services").upsert(upsertRows);
@@ -745,15 +775,25 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localCategories.map((c) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localCategories.forEach((c) => {
           const item: any = {
             name: c.name,
           };
           if (!c.id.startsWith("new-") && !c.id.startsWith("temp-")) {
             item.id = c.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("categories").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("categories").upsert(upsertRows);
@@ -771,7 +811,10 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localAchievements.map((a) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localAchievements.forEach((a) => {
           const item: any = {
             metric: a.metric,
             title: a.title,
@@ -780,9 +823,16 @@ function AdminDashboard() {
           };
           if (!a.id.startsWith("new-") && !a.id.startsWith("temp-")) {
             item.id = a.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("achievements").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("achievements").upsert(upsertRows);
