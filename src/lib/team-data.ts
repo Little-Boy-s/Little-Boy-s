@@ -2,6 +2,7 @@
 export type TeamCategory = "Frontend" | "Backend" | "AI" | "DevOps" | "Design" | "Mobile" | "Fullstack";
 
 export type Builder = {
+  id?: string;
   name: string;
   role: string;
   category: string;
