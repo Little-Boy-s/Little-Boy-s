@@ -88,7 +88,11 @@ export function TeamGrid() {
   const filters = useMemo(() => ["All", ...categories.map((c) => c.name)], [categories]);
 
   const filtered = useMemo(
-    () => (filter === "All" ? builders : builders.filter((b) => b.category === filter)),
+    () => (
+      filter === "All"
+        ? builders
+        : builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(filter))
+    ),
     [filter, builders],
   );
 
@@ -110,7 +114,7 @@ export function TeamGrid() {
             >
               {f}
               <span className="ml-1.5 text-[10px] opacity-70">
-                {f === "All" ? builders.length : builders.filter((b) => b.category === f).length}
+                {f === "All" ? builders.length : builders.filter((b) => b.category && b.category.split(",").map(c => c.trim()).includes(f)).length}
               </span>
             </button>
           );

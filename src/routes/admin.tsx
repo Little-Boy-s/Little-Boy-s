@@ -1,35 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Plus,
-  Trash2,
-  Save,
-  RefreshCw,
-  Upload,
-  Database,
-  Code,
-  HelpCircle,
-  Check,
-  Loader2,
-  FileSpreadsheet,
-  Eye,
-  Image,
-  Lock,
-  Unlock,
-  Edit,
-  X,
+import { 
+  ArrowLeft, Plus, Trash2, Save, RefreshCw, Upload, Database, 
+  Code, HelpCircle, Check, Loader2, FileSpreadsheet, Eye, Image, Lock, Unlock,
+  Edit, X
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured, setSupabaseAdminKey } from "@/lib/supabase";
-import {
-  useProjects,
-  useBuilders,
-  useServices,
-  useCategories,
-  useAchievements,
-} from "@/hooks/useSupabaseData";
-import { projects as mockProjects, achievements as mockAchievements } from "@/lib/site-data";
+import { useProjects, useBuilders, useServices, useCategories, useAchievements } from "@/hooks/useSupabaseData";
+import { projects as mockProjects, achievements as mockAchievements, services as mockServices } from "@/lib/site-data";
 import { builders as mockBuilders } from "@/lib/team-data";
 import { toast } from "sonner";
 
@@ -47,7 +26,7 @@ type Tab = "projects" | "builders" | "services" | "categories" | "sql-setup" | "
 
 function AdminDashboard() {
   const queryClient = useQueryClient();
-
+  
   // Tabs state
   const [activeTab, setActiveTab] = useState<Tab>("projects");
 
@@ -85,12 +64,12 @@ function AdminDashboard() {
 
   // Cell editing state: { rowIndex, field }
   const [editingCell, setEditingCell] = useState<{ rowIndex: number; field: string } | null>(null);
-
+  
   // Row Editor Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [modalDraft, setModalDraft] = useState<any | null>(null);
-
+  
   // Custom gradient builder states
   const [gradientColorA, setGradientColorA] = useState("#00f2fe");
   const [gradientColorB, setGradientColorB] = useState("#4facfe");
@@ -99,11 +78,7 @@ function AdminDashboard() {
   // Loading status for save & seed mutations
   const [isSaving, setIsSaving] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
-  const [uploadingCell, setUploadingCell] = useState<{
-    rowIndex: number | null;
-    field: string;
-    isModal?: boolean;
-  } | null>(null);
+  const [uploadingCell, setUploadingCell] = useState<{ rowIndex: number | null; field: string; isModal?: boolean } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -114,7 +89,7 @@ function AdminDashboard() {
       setIsUnlocked(true);
       const useMock = sessionStorage.getItem("admin_use_mock") === "true";
       setIsMockMode(!isSupabaseConfigured || useMock);
-
+      
       const savedKey = sessionStorage.getItem("admin_key") || "";
       if (savedKey) {
         setSupabaseAdminKey(savedKey);
@@ -149,7 +124,7 @@ function AdminDashboard() {
           live_url: p.liveUrl,
           accent: p.accent,
           logo_url: p.logo || "",
-        })),
+        }))
       );
     }
   }, [projectsData]);
@@ -172,7 +147,8 @@ function AdminDashboard() {
           fun_fact: b.funFact,
           email: b.email || "",
           website: b.website || "",
-        })),
+          avatar_url: b.avatarUrl || "",
+        }))
       );
     }
   }, [buildersData]);
@@ -185,7 +161,7 @@ function AdminDashboard() {
           title: s.title,
           description: s.description,
           icon: s.icon,
-        })),
+        }))
       );
     }
   }, [servicesData]);
@@ -196,7 +172,7 @@ function AdminDashboard() {
         categoriesData.map((c, idx) => ({
           id: c.id || `temp-c-${idx}`,
           name: c.name,
-        })),
+        }))
       );
     }
   }, [categoriesData]);
@@ -210,22 +186,12 @@ function AdminDashboard() {
           title: a.title,
           description: a.description,
           image_url: a.image_url || "",
-        })),
+        }))
       );
     }
   }, [achievementsData]);
 
-  const LUCIDE_ICONS = [
-    "Globe",
-    "Server",
-    "Bot",
-    "TestTube",
-    "Workflow",
-    "Palette",
-    "Terminal",
-    "Cpu",
-    "Layers",
-  ];
+  const LUCIDE_ICONS = ["Globe", "Server", "Bot", "TestTube", "Workflow", "Palette", "Terminal", "Cpu", "Layers"];
 
   // ================= PASSWORD GATE SUBMIT =================
 
@@ -277,21 +243,16 @@ function AdminDashboard() {
           setIsUnlocked(true);
           setIsMockMode(true);
           setPasswordInput("");
-          toast.success("Console unlocked (Mock Mode). Welcome back, Administrator.", {
-            id: unlockToast,
-          });
+          toast.success("Console unlocked (Mock Mode). Welcome back, Administrator.", { id: unlockToast });
         } else {
           toast.error("Invalid password. Access Denied.", { id: unlockToast });
         }
       }
     } catch (err: any) {
       console.error("Verification failed:", err);
-
-      const isNetworkError =
-        err.message?.includes("fetch") ||
-        err.message?.includes("NetworkError") ||
-        err.name === "TypeError";
-
+      
+      const isNetworkError = err.message?.includes("fetch") || err.message?.includes("NetworkError") || err.name === "TypeError";
+      
       if (isNetworkError && passwordInput === "admin123") {
         sessionStorage.setItem("admin_unlocked", "true");
         sessionStorage.setItem("admin_key", "admin123");
@@ -300,14 +261,12 @@ function AdminDashboard() {
         setIsUnlocked(true);
         setIsMockMode(true);
         setPasswordInput("");
-        toast.success("Database unreachable. Unlocked in Mock Mode successfully!", {
-          id: unlockToast,
-        });
+        toast.success("Database unreachable. Unlocked in Mock Mode successfully!", { id: unlockToast });
       } else {
-        const errorMsg = isNetworkError
+        const errorMsg = isNetworkError 
           ? "Failed to connect to Supabase database. This is often caused by ISP blocks (common in Vietnam for supabase.co) or adblockers. Try using a VPN, changing your DNS to 1.1.1.1, or use the password 'admin123' to unlock Mock Mode."
-          : err.message || "Failed to communicate with database";
-
+          : (err.message || "Failed to communicate with database");
+        
         toast.error(`Authentication failed: ${errorMsg}`, { id: unlockToast, duration: 8000 });
       }
     }
@@ -373,7 +332,7 @@ function AdminDashboard() {
       if (!prev) return prev;
       return {
         ...prev,
-        accent: `linear-gradient(${angle}deg, ${colorA}, ${colorB})`,
+        accent: `linear-gradient(${angle}deg, ${colorA}, ${colorB})`
       };
     });
   };
@@ -384,9 +343,7 @@ function AdminDashboard() {
       return { ...prev, accent: gradient };
     });
 
-    const match = gradient.match(
-      /linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/,
-    );
+    const match = gradient.match(/linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/);
     if (match) {
       setGradientAngle(parseInt(match[1]) || 135);
       setGradientColorA(match[2]);
@@ -408,15 +365,13 @@ function AdminDashboard() {
     } else if (activeTab === "achievements") {
       originalRow = localAchievements[index];
     }
-
+    
     if (originalRow) {
       setModalDraft({ ...originalRow });
-
+      
       // Parse accent to set initial gradient values if it's a projects row
       if (activeTab === "projects" && originalRow.accent) {
-        const match = originalRow.accent.match(
-          /linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/,
-        );
+        const match = originalRow.accent.match(/linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/);
         if (match) {
           const angle = parseInt(match[1]) || 135;
           const colorA = match[2];
@@ -440,7 +395,7 @@ function AdminDashboard() {
 
   const saveModalChanges = () => {
     if (editingRowIndex === null || !modalDraft) return;
-
+    
     if (activeTab === "projects") {
       const updated = [...localProjects];
       updated[editingRowIndex] = modalDraft;
@@ -462,7 +417,7 @@ function AdminDashboard() {
       updated[editingRowIndex] = modalDraft;
       setLocalAchievements(updated);
     }
-
+    
     setIsModalOpen(false);
     setEditingRowIndex(null);
     setModalDraft(null);
@@ -548,35 +503,35 @@ function AdminDashboard() {
   const deleteRow = (rowIndex: number) => {
     if (activeTab === "projects") {
       const row = localProjects[rowIndex];
-      if (row.id && !row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
+      if (!row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
         setDeletedProjects([...deletedProjects, row.id]);
       }
       setLocalProjects(localProjects.filter((_, idx) => idx !== rowIndex));
       toast.warning("Row removed from projects buffer");
     } else if (activeTab === "builders") {
       const row = localBuilders[rowIndex];
-      if (row.id && !row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
+      if (!row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
         setDeletedBuilders([...deletedBuilders, row.id]);
       }
       setLocalBuilders(localBuilders.filter((_, idx) => idx !== rowIndex));
       toast.warning("Row removed from builders buffer");
     } else if (activeTab === "services") {
       const row = localServices[rowIndex];
-      if (row.id && !row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
+      if (!row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
         setDeletedServices([...deletedServices, row.id]);
       }
       setLocalServices(localServices.filter((_, idx) => idx !== rowIndex));
       toast.warning("Row removed from services buffer");
     } else if (activeTab === "categories") {
       const row = localCategories[rowIndex];
-      if (row.id && !row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
+      if (!row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
         setDeletedCategories([...deletedCategories, row.id]);
       }
       setLocalCategories(localCategories.filter((_, idx) => idx !== rowIndex));
       toast.warning("Row removed from categories buffer");
     } else if (activeTab === "achievements") {
       const row = localAchievements[rowIndex];
-      if (row.id && !row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
+      if (!row.id.startsWith("new-") && !row.id.startsWith("temp-")) {
         setDeletedAchievements([...deletedAchievements, row.id]);
       }
       setLocalAchievements(localAchievements.filter((_, idx) => idx !== rowIndex));
@@ -603,9 +558,7 @@ function AdminDashboard() {
     const { rowIndex, field, isModal } = uploadingCell;
 
     if (isMockMode) {
-      toast.error(
-        "Cannot upload images while in Mock Mode. Set up a working Supabase configuration to use storage.",
-      );
+      toast.error("Cannot upload images while in Mock Mode. Set up a working Supabase configuration to use storage.");
       setUploadingCell(null);
       return;
     }
@@ -628,14 +581,16 @@ function AdminDashboard() {
         throw uploadError;
       }
 
-      const { data: urlData } = supabase.storage.from("portfolio-images").getPublicUrl(filePath);
+      const { data: urlData } = supabase.storage
+        .from("portfolio-images")
+        .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
 
       if (isModal) {
         setModalDraft((prev: any) => ({
           ...prev,
-          [field]: publicUrl,
+          [field]: publicUrl
         }));
       } else if (rowIndex !== null) {
         handleCellChange(publicUrl, rowIndex, field);
@@ -655,9 +610,28 @@ function AdminDashboard() {
 
   const saveChanges = async () => {
     if (isMockMode) {
-      toast.error(
-        "Cannot save changes while in Mock Mode. To save, please connect to a working Supabase database.",
-      );
+      const saveToast = toast.loading("Saving changes locally...");
+      try {
+        if (activeTab === "projects") {
+          localStorage.setItem("portfolio_mock_projects", JSON.stringify(localProjects));
+          queryClient.invalidateQueries({ queryKey: ["projects"] });
+        } else if (activeTab === "builders") {
+          localStorage.setItem("portfolio_mock_builders", JSON.stringify(localBuilders));
+          queryClient.invalidateQueries({ queryKey: ["builders"] });
+        } else if (activeTab === "services") {
+          localStorage.setItem("portfolio_mock_services", JSON.stringify(localServices));
+          queryClient.invalidateQueries({ queryKey: ["services"] });
+        } else if (activeTab === "categories") {
+          localStorage.setItem("portfolio_mock_categories", JSON.stringify(localCategories));
+          queryClient.invalidateQueries({ queryKey: ["categories"] });
+        } else if (activeTab === "achievements") {
+          localStorage.setItem("portfolio_mock_achievements", JSON.stringify(localAchievements));
+          queryClient.invalidateQueries({ queryKey: ["achievements"] });
+        }
+        toast.success("Changes saved locally in Mock Mode!", { id: saveToast });
+      } catch (err: any) {
+        toast.error(`Local save failed: ${err.message}`, { id: saveToast });
+      }
       return;
     }
 
@@ -672,7 +646,10 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localProjects.map((p) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localProjects.forEach((p) => {
           const item: any = {
             title: p.title,
             description: p.description,
@@ -682,11 +659,18 @@ function AdminDashboard() {
             accent: p.accent,
             logo_url: p.logo_url,
           };
-          if (p.id && !p.id.startsWith("new-") && !p.id.startsWith("temp-")) {
+          if (!p.id.startsWith("new-") && !p.id.startsWith("temp-")) {
             item.id = p.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("projects").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("projects").upsert(upsertRows);
@@ -704,7 +688,10 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localBuilders.map((b) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localBuilders.forEach((b) => {
           const item: any = {
             name: b.name,
             role: b.role,
@@ -719,12 +706,20 @@ function AdminDashboard() {
             fun_fact: b.fun_fact,
             email: b.email,
             website: b.website,
+            avatar_url: b.avatar_url,
           };
-          if (b.id && !b.id.startsWith("new-") && !b.id.startsWith("temp-")) {
+          if (!b.id.startsWith("new-") && !b.id.startsWith("temp-")) {
             item.id = b.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("builders").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("builders").upsert(upsertRows);
@@ -742,17 +737,27 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localServices.map((s) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localServices.forEach((s) => {
           const item: any = {
             title: s.title,
             description: s.description,
             icon: s.icon,
           };
-          if (s.id && !s.id.startsWith("new-") && !s.id.startsWith("temp-")) {
+          if (!s.id.startsWith("new-") && !s.id.startsWith("temp-")) {
             item.id = s.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("services").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("services").upsert(upsertRows);
@@ -770,15 +775,25 @@ function AdminDashboard() {
           if (error) throw error;
         }
 
-        const upsertRows = localCategories.map((c) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localCategories.forEach((c) => {
           const item: any = {
             name: c.name,
           };
-          if (c.id && !c.id.startsWith("new-") && !c.id.startsWith("temp-")) {
+          if (!c.id.startsWith("new-") && !c.id.startsWith("temp-")) {
             item.id = c.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("categories").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("categories").upsert(upsertRows);
@@ -792,25 +807,32 @@ function AdminDashboard() {
       // 5. Achievements Saving
       if (activeTab === "achievements") {
         if (deletedAchievements.length > 0) {
-          const { error } = await supabase
-            .from("achievements")
-            .delete()
-            .in("id", deletedAchievements);
+          const { error } = await supabase.from("achievements").delete().in("id", deletedAchievements);
           if (error) throw error;
         }
 
-        const upsertRows = localAchievements.map((a) => {
+        const insertRows: any[] = [];
+        const upsertRows: any[] = [];
+
+        localAchievements.forEach((a) => {
           const item: any = {
             metric: a.metric,
             title: a.title,
             description: a.description,
             image_url: a.image_url || "",
           };
-          if (a.id && !a.id.startsWith("new-") && !a.id.startsWith("temp-")) {
+          if (!a.id.startsWith("new-") && !a.id.startsWith("temp-")) {
             item.id = a.id;
+            upsertRows.push(item);
+          } else {
+            insertRows.push(item);
           }
-          return item;
         });
+
+        if (insertRows.length > 0) {
+          const { error } = await supabase.from("achievements").insert(insertRows);
+          if (error) throw error;
+        }
 
         if (upsertRows.length > 0) {
           const { error } = await supabase.from("achievements").upsert(upsertRows);
@@ -824,10 +846,7 @@ function AdminDashboard() {
       toast.success("Database synced successfully!", { id: saveToast });
     } catch (err: any) {
       console.error("Save failure:", err);
-      toast.error(
-        `Database error: ${err.message || "Operation failed"}. Make sure your SQL setup is up-to-date! Check the 'SQL Setup' tab.`,
-        { id: saveToast, duration: 6000 },
-      );
+      toast.error(`Database error: ${err.message || "Operation failed"}. Make sure your SQL setup is up-to-date! Check the 'SQL Setup' tab.`, { id: saveToast, duration: 6000 });
     } finally {
       setIsSaving(false);
     }
@@ -837,14 +856,104 @@ function AdminDashboard() {
 
   const seedDatabase = async () => {
     if (isMockMode) {
-      toast.error(
-        "Cannot seed database while in Mock Mode. To seed, please connect to a working Supabase database.",
+      const confirm = window.confirm(
+        "This will reset all your mock data in local storage back to starting defaults. Continue?"
       );
+      if (!confirm) return;
+
+      setIsSeeding(true);
+      const seedToast = toast.loading("Resetting mock data to defaults...");
+      try {
+        localStorage.removeItem("portfolio_mock_projects");
+        localStorage.removeItem("portfolio_mock_builders");
+        localStorage.removeItem("portfolio_mock_services");
+        localStorage.removeItem("portfolio_mock_categories");
+        localStorage.removeItem("portfolio_mock_achievements");
+
+        // Sync local states back to defaults
+        setLocalProjects(
+          mockProjects.map((p, idx) => ({
+            id: `temp-p-${idx}`,
+            title: p.title,
+            description: p.description,
+            stack: p.stack,
+            repo_url: p.repoUrl,
+            live_url: p.liveUrl,
+            accent: p.accent,
+            logo_url: p.logo || "",
+          }))
+        );
+
+        setLocalBuilders(
+          mockBuilders.map((b, idx) => ({
+            id: `temp-b-${idx}`,
+            name: b.name,
+            role: b.role,
+            category: b.category,
+            github: b.github,
+            hue: b.hue,
+            tagline: b.tagline,
+            location: b.location,
+            years_exp: b.yearsExp,
+            bio: b.bio,
+            skills: b.skills,
+            fun_fact: b.funFact,
+            email: b.email || "",
+            website: b.website || "",
+          }))
+        );
+
+        setLocalServices(
+          mockServices.map((s, idx) => ({
+            id: `temp-s-${idx}`,
+            title: s.title,
+            description: s.description,
+            icon: s.icon,
+          }))
+        );
+
+        setLocalCategories(
+          [
+            { name: "Frontend" },
+            { name: "Backend" },
+            { name: "Fullstack" },
+            { name: "AI" },
+            { name: "DevOps" },
+            { name: "Mobile" },
+            { name: "Design" },
+          ].map((c, idx) => ({
+            id: `temp-c-${idx}`,
+            name: c.name,
+          }))
+        );
+
+        setLocalAchievements(
+          mockAchievements.map((a, idx) => ({
+            id: `temp-a-${idx}`,
+            metric: a.metric,
+            title: a.title,
+            description: a.description,
+            image_url: a.image_url || "",
+          }))
+        );
+
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+        queryClient.invalidateQueries({ queryKey: ["builders"] });
+        queryClient.invalidateQueries({ queryKey: ["services"] });
+        queryClient.invalidateQueries({ queryKey: ["categories"] });
+        queryClient.invalidateQueries({ queryKey: ["achievements"] });
+
+        toast.success("Mock data reset to defaults successfully!", { id: seedToast });
+      } catch (err: any) {
+        toast.error(`Reset failed: ${err.message}`, { id: seedToast });
+      } finally {
+        setIsSeeding(false);
+      }
       return;
     }
 
     const confirm = window.confirm(
-      "This will import your starting static portfolio files into your Supabase database. Continue?",
+      "This will import your starting static portfolio files into your Supabase database. Continue?"
     );
     if (!confirm) return;
 
@@ -862,9 +971,7 @@ function AdminDashboard() {
         { name: "Mobile" },
         { name: "Design" },
       ];
-      const { error: cErr } = await supabase
-        .from("categories")
-        .upsert(categoryRows, { onConflict: "name" });
+      const { error: cErr } = await supabase.from("categories").upsert(categoryRows, { onConflict: "name" });
       if (cErr) throw cErr;
 
       // 2. Seed Projects
@@ -910,7 +1017,7 @@ function AdminDashboard() {
       if (aErr) throw aErr;
 
       toast.success("Database populated with mock data!", { id: seedToast });
-
+      
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["builders"] });
       queryClient.invalidateQueries({ queryKey: ["services"] });
@@ -918,10 +1025,7 @@ function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["achievements"] });
     } catch (err: any) {
       console.error("Seeding failed:", err);
-      toast.error(
-        `Database seeding failed: ${err.message}. Ensure you have created the tables in Supabase SQL editor! Check the 'SQL Setup' tab.`,
-        { id: seedToast, duration: 6000 },
-      );
+      toast.error(`Database seeding failed: ${err.message}. Ensure you have created the tables in Supabase SQL editor! Check the 'SQL Setup' tab.`, { id: seedToast, duration: 6000 });
     } finally {
       setIsSeeding(false);
     }
@@ -1047,10 +1151,6 @@ CREATE POLICY "Allow secure write builders" ON public.builders
 FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')) 
 WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
 
-CREATE POLICY "Allow secure write categories" ON public.categories
-FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'))
-WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
-
 CREATE POLICY "Allow secure write services" ON public.services 
 FOR ALL USING (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key')) 
 WITH CHECK (public.verify_admin_key(current_setting('request.headers', true)::json->>'x-admin-key'));
@@ -1169,10 +1269,7 @@ FOR DELETE USING (
       <div className="mx-auto max-w-7xl px-5">
         <div className="flex items-center justify-between border-b border-border/80 pb-6 mb-8 flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="p-2 border border-border bg-card/60 rounded-lg hover:text-neon hover:border-neon/60 transition-colors"
-            >
+            <Link to="/" className="p-2 border border-border bg-card/60 rounded-lg hover:text-neon hover:border-neon/60 transition-colors">
               <ArrowLeft className="size-4" />
             </Link>
             <div>
@@ -1219,25 +1316,19 @@ FOR DELETE USING (
             </div>
             <div>
               <h3 className="font-semibold text-amber-300">
-                {!isSupabaseConfigured
-                  ? "Supabase Credentials Missing"
-                  : "Supabase Database Offline / Unreachable"}
+                {!isSupabaseConfigured ? "Supabase Credentials Missing" : "Supabase Database Offline / Unreachable"}
               </h3>
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed text-left">
                 {!isSupabaseConfigured ? (
                   <>
-                    The application is running in <strong>mock mode</strong>. Changes cannot be
-                    saved to the database. Please add <code>VITE_SUPABASE_URL</code> and{" "}
-                    <code>VITE_SUPABASE_ANON_KEY</code> to your local <code>.env.local</code> file
-                    and restart your local dev server.
+                    The application is running in <strong>mock mode</strong>. Changes cannot be saved to the database. 
+                    Please add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to your local <code>.env.local</code> file and restart your local dev server.
                   </>
                 ) : (
                   <>
-                    The application is running in <strong>mock mode</strong> because the Supabase
-                    database is unreachable. This is often caused by ISP blocks (common in Vietnam
-                    for <code>supabase.co</code>) or network problems. Try using a VPN, changing
-                    your DNS to <code>1.1.1.1</code> or <code>8.8.8.8</code>, or check your
-                    connection to connect securely.
+                    The application is running in <strong>mock mode</strong> because the Supabase database is unreachable. 
+                    This is often caused by ISP blocks (common in Vietnam for <code>supabase.co</code>) or network problems. 
+                    Try using a VPN, changing your DNS to <code>1.1.1.1</code> or <code>8.8.8.8</code>, or check your connection to connect securely.
                   </>
                 )}
               </p>
@@ -1251,9 +1342,7 @@ FOR DELETE USING (
             <button
               onClick={() => setActiveTab("projects")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
-                activeTab === "projects"
-                  ? "bg-neon text-black font-semibold shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
+                activeTab === "projects" ? "bg-neon text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <FileSpreadsheet className="size-3.5" /> Projects
@@ -1261,9 +1350,7 @@ FOR DELETE USING (
             <button
               onClick={() => setActiveTab("builders")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
-                activeTab === "builders"
-                  ? "bg-neon text-black font-semibold shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
+                activeTab === "builders" ? "bg-neon text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <FileSpreadsheet className="size-3.5" /> Builders (Team)
@@ -1271,9 +1358,7 @@ FOR DELETE USING (
             <button
               onClick={() => setActiveTab("services")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
-                activeTab === "services"
-                  ? "bg-neon text-black font-semibold shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
+                activeTab === "services" ? "bg-neon text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <FileSpreadsheet className="size-3.5" /> Services
@@ -1281,9 +1366,7 @@ FOR DELETE USING (
             <button
               onClick={() => setActiveTab("categories")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
-                activeTab === "categories"
-                  ? "bg-neon text-black font-semibold shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
+                activeTab === "categories" ? "bg-neon text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <FileSpreadsheet className="size-3.5" /> Categories
@@ -1291,9 +1374,7 @@ FOR DELETE USING (
             <button
               onClick={() => setActiveTab("achievements")}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
-                activeTab === "achievements"
-                  ? "bg-neon text-black font-semibold shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
+                activeTab === "achievements" ? "bg-neon text-black font-semibold shadow-md" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <FileSpreadsheet className="size-3.5" /> Achievements
@@ -1311,28 +1392,20 @@ FOR DELETE USING (
 
               <button
                 onClick={seedDatabase}
-                disabled={isSeeding || isMockMode}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#092d1c] border border-emerald-500/30 hover:bg-[#0c3e27] disabled:opacity-50 disabled:pointer-events-none text-emerald-400 text-xs font-mono rounded-md transition-colors"
+                disabled={isSeeding}
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#092d1c] border border-emerald-500/30 hover:bg-[#0c3e27] disabled:opacity-50 disabled:pointer-events-none text-emerald-400 text-xs font-mono rounded-md transition-colors cursor-pointer"
               >
-                {isSeeding ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Database className="size-3.5" />
-                )}
-                Import Defaults
+                {isSeeding ? <Loader2 className="size-3.5 animate-spin" /> : <Database className="size-3.5" />}
+                {isMockMode ? "Reset Defaults" : "Import Defaults"}
               </button>
 
               <button
                 onClick={saveChanges}
-                disabled={isSaving || isMockMode}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-neon hover:bg-neon/90 text-black font-mono font-bold text-xs rounded-md shadow-md shadow-neon/15 disabled:opacity-50 disabled:pointer-events-none transition-all"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-neon hover:bg-neon/90 text-black font-mono font-bold text-xs rounded-md shadow-md shadow-neon/15 disabled:opacity-50 disabled:pointer-events-none transition-all cursor-pointer"
               >
-                {isSaving ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Save className="size-3.5" />
-                )}
-                Sync Database
+                {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                {isMockMode ? "Save Changes" : "Sync Database"}
               </button>
             </div>
           )}
@@ -1344,35 +1417,13 @@ FOR DELETE USING (
               <h2 className="text-lg font-mono font-semibold flex items-center gap-2 mb-4">
                 <Code className="text-cyan size-5" /> Supabase Database & Storage Setup Instructions
               </h2>
-
+              
               <ol className="list-decimal pl-5 space-y-3 text-sm text-muted-foreground mb-6 leading-relaxed">
-                <li>
-                  Go to your{" "}
-                  <a
-                    href="https://supabase.com/dashboard"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan underline"
-                  >
-                    Supabase Dashboard
-                  </a>{" "}
-                  and open your project.
-                </li>
-                <li>
-                  Navigate to the <strong>SQL Editor</strong> tab on the left-side navigation bar.
-                </li>
-                <li>
-                  Click <strong>New Query</strong> and paste the entire SQL setup block below.
-                </li>
-                <li>
-                  Click <strong>Run</strong> on the top right to execute and build your PostgreSQL
-                  tables, access policies, and image Storage bucket.
-                </li>
-                <li>
-                  Once successful, return to this panel, click the green{" "}
-                  <strong>"Import Defaults"</strong> button above to populate the DB, and start
-                  typing!
-                </li>
+                <li>Go to your <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-cyan underline">Supabase Dashboard</a> and open your project.</li>
+                <li>Navigate to the <strong>SQL Editor</strong> tab on the left-side navigation bar.</li>
+                <li>Click <strong>New Query</strong> and paste the entire SQL setup block below.</li>
+                <li>Click <strong>Run</strong> on the top right to execute and build your PostgreSQL tables, access policies, and image Storage bucket.</li>
+                <li>Once successful, return to this panel, click the green <strong>"Import Defaults"</strong> button above to populate the DB, and start typing!</li>
               </ol>
 
               <div className="relative">
@@ -1413,52 +1464,39 @@ FOR DELETE USING (
                   <tbody>
                     {localProjects.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={9}
-                          className="p-8 text-center text-muted-foreground select-none"
-                        >
+                        <td colSpan={9} className="p-8 text-center text-muted-foreground select-none">
                           No projects. Click "Add Row" or "Import Defaults" to populate the grid.
                         </td>
                       </tr>
                     ) : (
                       localProjects.map((row, idx) => (
-                        <tr
-                          key={row.id}
-                          className="border-b border-border/30 hover:bg-white/5 transition-colors"
-                        >
+                        <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
                           <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
                             {idx + 1}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.title || (
-                              <span className="text-muted-foreground/40 italic">Click to edit</span>
-                            )}
+                            {row.title || <span className="text-muted-foreground/40 italic">Click to edit</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-xs"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.description || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.description || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => openEditorModal(idx)}
                           >
                             <div className="flex flex-wrap gap-1 max-w-[200px]">
                               {row.stack && row.stack.length > 0 ? (
                                 row.stack.map((s: string) => (
-                                  <span
-                                    key={s}
-                                    className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground"
-                                  >
+                                  <span key={s} className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground">
                                     {s}
                                   </span>
                                 ))
@@ -1471,11 +1509,7 @@ FOR DELETE USING (
                           <td className="p-3 border-r border-border/30 select-none">
                             <div className="flex items-center gap-2">
                               {row.logo_url ? (
-                                <img
-                                  src={row.logo_url}
-                                  alt="Logo"
-                                  className="size-8 object-cover rounded border border-border/60 bg-black/40"
-                                />
+                                <img src={row.logo_url} alt="Logo" className="size-8 object-cover rounded border border-border/60 bg-black/40" />
                               ) : (
                                 <div className="size-8 rounded border border-dashed border-border/60 bg-black/40 flex items-center justify-center text-muted-foreground">
                                   <Image className="size-4" />
@@ -1491,36 +1525,27 @@ FOR DELETE USING (
                             </div>
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-[150px]"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.repo_url || (
-                              <span className="text-muted-foreground/40 italic">Empty link</span>
-                            )}
+                            {row.repo_url || <span className="text-muted-foreground/40 italic">Empty link</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-[150px]"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.live_url || (
-                              <span className="text-muted-foreground/40 italic">Empty link</span>
-                            )}
+                            {row.live_url || <span className="text-muted-foreground/40 italic">Empty link</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => openEditorModal(idx)}
                           >
                             <span className="flex items-center gap-1.5 text-xs">
-                              <span
-                                className="size-3 rounded border border-border"
-                                style={{ background: row.accent }}
-                              />
-                              <span className="text-muted-foreground truncate max-w-[140px]">
-                                {row.accent || "Default color"}
-                              </span>
+                              <span className="size-3 rounded border border-border" style={{ background: row.accent }} />
+                              <span className="text-muted-foreground truncate max-w-[140px]">{row.accent || "Default color"}</span>
                             </span>
                           </td>
 
@@ -1574,43 +1599,32 @@ FOR DELETE USING (
                   <tbody>
                     {localBuilders.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={16}
-                          className="p-8 text-center text-muted-foreground select-none"
-                        >
-                          No team builders. Click "Add Row" or "Import Defaults" to populate the
-                          grid.
+                        <td colSpan={16} className="p-8 text-center text-muted-foreground select-none">
+                          No team builders. Click "Add Row" or "Import Defaults" to populate the grid.
                         </td>
                       </tr>
                     ) : (
                       localBuilders.map((row, idx) => (
-                        <tr
-                          key={row.id}
-                          className="border-b border-border/30 hover:bg-white/5 transition-colors"
-                        >
+                        <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
                           <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
                             {idx + 1}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.name || (
-                              <span className="text-muted-foreground/40 italic">Missing name</span>
-                            )}
+                            {row.name || <span className="text-muted-foreground/40 italic">Missing name</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.role || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.role || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => openEditorModal(idx)}
                           >
@@ -1622,13 +1636,9 @@ FOR DELETE USING (
                           <td className="p-3 border-r border-border/30 select-none">
                             <div className="flex items-center gap-2">
                               {row.avatar_url ? (
-                                <img
-                                  src={row.avatar_url}
-                                  alt="Avatar"
-                                  className="size-8 object-cover rounded-full border border-border/60 bg-black/40"
-                                />
+                                <img src={row.avatar_url} alt="Avatar" className="size-8 object-cover rounded-full border border-border/60 bg-black/40" />
                               ) : (
-                                <div
+                                <div 
                                   className="size-8 rounded-full border border-border/40 flex items-center justify-center font-bold text-xs"
                                   style={{
                                     background: `linear-gradient(135deg, hsl(${row.hue || 0}, 80%, 60%), hsl(${(row.hue || 0) + 60}, 80%, 40%))`,
@@ -1648,63 +1658,51 @@ FOR DELETE USING (
                             </div>
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 text-center"
                             onClick={() => openEditorModal(idx)}
                           >
-                            <span
-                              className="inline-block px-1.5 py-0.5 rounded text-[10px] text-black font-bold tracking-wide font-sans"
-                              style={{ background: `hsl(${row.hue || 0}, 85%, 60%)` }}
-                            >
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] text-black font-bold tracking-wide font-sans" style={{ background: `hsl(${row.hue || 0}, 85%, 60%)` }}>
                               {row.hue ?? 0}°
                             </span>
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-xs truncate"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.tagline || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.tagline || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.location || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.location || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 text-center"
                             onClick={() => openEditorModal(idx)}
                           >
                             {row.years_exp ?? 0} yrs
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-xs"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.bio || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.bio || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => openEditorModal(idx)}
                           >
                             <div className="flex flex-wrap gap-1 max-w-[200px]">
                               {row.skills && row.skills.length > 0 ? (
                                 row.skills.map((s: string) => (
-                                  <span
-                                    key={s}
-                                    className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground"
-                                  >
+                                  <span key={s} className="px-1.5 py-0.5 bg-white/5 ring-1 ring-border rounded text-[10px] text-muted-foreground">
                                     {s}
                                   </span>
                                 ))
@@ -1714,40 +1712,32 @@ FOR DELETE USING (
                             </div>
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-xs truncate"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.fun_fact || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.fun_fact || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.github || (
-                              <span className="text-muted-foreground/40 italic">Empty link</span>
-                            )}
+                            {row.github || <span className="text-muted-foreground/40 italic">Empty link</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.email || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.email || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 max-w-[150px] truncate"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.website || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.website || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td className="p-3 text-center">
@@ -1789,42 +1779,32 @@ FOR DELETE USING (
                   <tbody>
                     {localServices.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={5}
-                          className="p-8 text-center text-muted-foreground select-none"
-                        >
+                        <td colSpan={5} className="p-8 text-center text-muted-foreground select-none">
                           No services. Click "Add Row" or "Import Defaults" to populate the grid.
                         </td>
                       </tr>
                     ) : (
                       localServices.map((row, idx) => (
-                        <tr
-                          key={row.id}
-                          className="border-b border-border/30 hover:bg-white/5 transition-colors"
-                        >
+                        <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
                           <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
                             {idx + 1}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.title || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.title || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-sm"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.description || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.description || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5"
                             onClick={() => openEditorModal(idx)}
                           >
@@ -1863,39 +1843,29 @@ FOR DELETE USING (
                   <thead>
                     <tr className="bg-card border-b border-border/80 text-muted-foreground text-left select-none">
                       <th className="p-3 border-r border-border/40 w-12 text-center">No.</th>
-                      <th className="p-3 border-r border-border/40 w-96">
-                        Category Name (Discipline)
-                      </th>
+                      <th className="p-3 border-r border-border/40 w-96">Category Name (Discipline)</th>
                       <th className="p-3 w-16 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {localCategories.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={3}
-                          className="p-8 text-center text-muted-foreground select-none"
-                        >
+                        <td colSpan={3} className="p-8 text-center text-muted-foreground select-none">
                           No categories. Click "Add Row" or "Import Defaults" to populate the grid.
                         </td>
                       </tr>
                     ) : (
                       localCategories.map((row, idx) => (
-                        <tr
-                          key={row.id}
-                          className="border-b border-border/30 hover:bg-white/5 transition-colors"
-                        >
+                        <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
                           <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
                             {idx + 1}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.name || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.name || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td className="p-3 text-center">
@@ -1931,68 +1901,49 @@ FOR DELETE USING (
                       <th className="p-3 border-r border-border/40 w-32">Metric</th>
                       <th className="p-3 border-r border-border/40 w-64">Title</th>
                       <th className="p-3 border-r border-border/40 w-96">Description</th>
-                      <th className="p-3 border-r border-border/40 w-40">
-                        Certificate Image / Upload
-                      </th>
+                      <th className="p-3 border-r border-border/40 w-40">Certificate Image / Upload</th>
                       <th className="p-3 w-16 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {localAchievements.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan={6}
-                          className="p-8 text-center text-muted-foreground select-none"
-                        >
-                          No achievements. Click "Add Row" or "Import Defaults" to populate the
-                          grid.
+                        <td colSpan={6} className="p-8 text-center text-muted-foreground select-none">
+                          No achievements. Click "Add Row" or "Import Defaults" to populate the grid.
                         </td>
                       </tr>
                     ) : (
                       localAchievements.map((row, idx) => (
-                        <tr
-                          key={row.id}
-                          className="border-b border-border/30 hover:bg-white/5 transition-colors"
-                        >
+                        <tr key={row.id} className="border-b border-border/30 hover:bg-white/5 transition-colors">
                           <td className="p-3 border-r border-border/30 text-center text-muted-foreground/60 select-none bg-card/20">
                             {idx + 1}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold text-cyan"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.metric || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.metric || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 font-semibold"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.title || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.title || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
-                          <td
+                          <td 
                             className="p-3 border-r border-border/30 cursor-pointer hover:bg-white/5 truncate max-w-sm"
                             onClick={() => openEditorModal(idx)}
                           >
-                            {row.description || (
-                              <span className="text-muted-foreground/40 italic">Empty</span>
-                            )}
+                            {row.description || <span className="text-muted-foreground/40 italic">Empty</span>}
                           </td>
 
                           <td className="p-3 border-r border-border/30 select-none">
                             <div className="flex items-center gap-2">
                               {row.image_url ? (
-                                <img
-                                  src={row.image_url}
-                                  alt="Certificate"
-                                  className="size-8 object-cover rounded border border-border/60 bg-black/40"
-                                />
+                                <img src={row.image_url} alt="Certificate" className="size-8 object-cover rounded border border-border/60 bg-black/40" />
                               ) : (
                                 <div className="size-8 rounded border border-dashed border-border/60 bg-black/40 flex items-center justify-center text-muted-foreground">
                                   <Image className="size-4" />
@@ -2038,7 +1989,7 @@ FOR DELETE USING (
       </div>
 
       {isModalOpen && modalDraft && (
-        <div
+        <div 
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setIsModalOpen(false);
@@ -2050,6 +2001,7 @@ FOR DELETE USING (
         >
           {/* Modal Container */}
           <div className="relative w-full max-w-2xl bg-[#090b10] border border-border rounded-2xl shadow-2xl overflow-hidden font-mono flex flex-col my-8 max-h-[78vh]">
+            
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-card/60">
               <div className="flex items-center gap-2">
@@ -2058,7 +2010,7 @@ FOR DELETE USING (
                   Row Editor — Tab: {activeTab}
                 </h3>
               </div>
-              <button
+              <button 
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditingRowIndex(null);
@@ -2074,215 +2026,166 @@ FOR DELETE USING (
             <div className="p-6 overflow-y-auto space-y-5 flex-1 select-none">
               {activeTab === "projects" && (
                 <div className="space-y-4 text-left">
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Project Title
-                    </label>
-                    <input
-                      type="text"
-                      value={modalDraft.title || ""}
-                      onChange={(e) => setModalDraft({ ...modalDraft, title: e.target.value })}
-                      className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
-                    />
-                  </div>
-
-                  <div className="bg-black/30 border border-border/60 p-4 rounded-xl space-y-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        CSS Accent Theme
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={modalDraft.accent || ""}
-                          onChange={(e) => {
-                            const newAccent = e.target.value;
-                            setModalDraft({ ...modalDraft, accent: newAccent });
-                            // Try parsing on the fly so sliders update if manual input matches a gradient
-                            const match = newAccent.match(
-                              /linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/,
-                            );
-                            if (match) {
-                              setGradientAngle(parseInt(match[1]) || 135);
-                              setGradientColorA(match[2]);
-                              setGradientColorB(match[3]);
-                            }
-                          }}
-                          placeholder="linear-gradient(135deg, #00f2fe, #4facfe)"
-                          className="flex-1 bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
-                        />
-                      </div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Project Title</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.title || ""} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, title: e.target.value })}
+                        className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                      />
                     </div>
 
-                    {/* Custom Gradient Builder Interface */}
-                    <div className="bg-black/50 border border-border/40 p-4 rounded-xl space-y-4">
-                      <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-cyan">
-                          Dynamic Gradient Builder
-                        </span>
-                        <span className="text-[9px] text-muted-foreground bg-white/5 border border-border px-2 py-0.5 rounded-full">
-                          Active: {gradientAngle}° angle
-                        </span>
+                    <div className="bg-black/30 border border-border/60 p-4 rounded-xl space-y-4">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">CSS Accent Theme</label>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={modalDraft.accent || ""} 
+                            onChange={(e) => {
+                              const newAccent = e.target.value;
+                              setModalDraft({ ...modalDraft, accent: newAccent });
+                              // Try parsing on the fly so sliders update if manual input matches a gradient
+                              const match = newAccent.match(/linear-gradient\((\d+)deg,\s*(#[a-fA-F0-9]{6}),\s*(#[a-fA-F0-9]{6})\)/);
+                              if (match) {
+                                setGradientAngle(parseInt(match[1]) || 135);
+                                setGradientColorA(match[2]);
+                                setGradientColorB(match[3]);
+                              }
+                            }}
+                            placeholder="linear-gradient(135deg, #00f2fe, #4facfe)"
+                            className="flex-1 bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
+                          />
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3.5">
-                        <div>
-                          <label className="block text-[9px] uppercase tracking-widest text-muted-foreground mb-1">
-                            Color A (Start)
-                          </label>
-                          <div className="flex gap-2 items-center bg-black/40 border border-border/60 hover:border-cyan/30 rounded-lg p-1.5 transition-all">
-                            <div className="relative size-7 rounded border border-border bg-black/20 overflow-hidden flex items-center justify-center shrink-0">
-                              <input
-                                type="color"
+                      {/* Custom Gradient Builder Interface */}
+                      <div className="bg-black/50 border border-border/40 p-4 rounded-xl space-y-4">
+                        <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-cyan">Dynamic Gradient Builder</span>
+                          <span className="text-[9px] text-muted-foreground bg-white/5 border border-border px-2 py-0.5 rounded-full">
+                            Active: {gradientAngle}° angle
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3.5">
+                          <div>
+                            <label className="block text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Color A (Start)</label>
+                            <div className="flex gap-2 items-center bg-black/40 border border-border/60 hover:border-cyan/30 rounded-lg p-1.5 transition-all">
+                              <div className="relative size-7 rounded border border-border bg-black/20 overflow-hidden flex items-center justify-center shrink-0">
+                                <input 
+                                  type="color" 
+                                  value={gradientColorA} 
+                                  onChange={(e) => {
+                                    const colA = e.target.value;
+                                    updateCustomGradient(colA, gradientColorB, gradientAngle);
+                                  }}
+                                  className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
+                                />
+                              </div>
+                              <input 
+                                type="text"
                                 value={gradientColorA}
                                 onChange={(e) => {
-                                  const colA = e.target.value;
-                                  updateCustomGradient(colA, gradientColorB, gradientAngle);
+                                  let val = e.target.value;
+                                  if (val.startsWith("#") && val.length <= 7) {
+                                    setGradientColorA(val);
+                                    if (val.length === 7) {
+                                      updateCustomGradient(val, gradientColorB, gradientAngle);
+                                    }
+                                  }
                                 }}
-                                className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
+                                className="w-full bg-transparent border-0 text-xs font-mono focus:outline-none text-foreground"
                               />
                             </div>
-                            <input
-                              type="text"
-                              value={gradientColorA}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val.startsWith("#") && val.length <= 7) {
-                                  setGradientColorA(val);
-                                  if (val.length === 7) {
-                                    updateCustomGradient(val, gradientColorB, gradientAngle);
-                                  }
-                                }
-                              }}
-                              className="w-full bg-transparent border-0 text-xs font-mono focus:outline-none text-foreground"
-                            />
                           </div>
-                        </div>
 
-                        <div>
-                          <label className="block text-[9px] uppercase tracking-widest text-muted-foreground mb-1">
-                            Color B (End)
-                          </label>
-                          <div className="flex gap-2 items-center bg-black/40 border border-border/60 hover:border-cyan/30 rounded-lg p-1.5 transition-all">
-                            <div className="relative size-7 rounded border border-border bg-black/20 overflow-hidden flex items-center justify-center shrink-0">
-                              <input
-                                type="color"
+                          <div>
+                            <label className="block text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Color B (End)</label>
+                            <div className="flex gap-2 items-center bg-black/40 border border-border/60 hover:border-cyan/30 rounded-lg p-1.5 transition-all">
+                              <div className="relative size-7 rounded border border-border bg-black/20 overflow-hidden flex items-center justify-center shrink-0">
+                                <input 
+                                  type="color" 
+                                  value={gradientColorB} 
+                                  onChange={(e) => {
+                                    const colB = e.target.value;
+                                    updateCustomGradient(gradientColorA, colB, gradientAngle);
+                                  }}
+                                  className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
+                                />
+                              </div>
+                              <input 
+                                type="text"
                                 value={gradientColorB}
                                 onChange={(e) => {
-                                  const colB = e.target.value;
-                                  updateCustomGradient(gradientColorA, colB, gradientAngle);
+                                  let val = e.target.value;
+                                  if (val.startsWith("#") && val.length <= 7) {
+                                    setGradientColorB(val);
+                                    if (val.length === 7) {
+                                      updateCustomGradient(gradientColorA, val, gradientAngle);
+                                    }
+                                  }
                                 }}
-                                className="absolute inset-0 size-full cursor-pointer scale-150 opacity-100 border-0 p-0"
+                                className="w-full bg-transparent border-0 text-xs font-mono focus:outline-none text-foreground"
                               />
                             </div>
-                            <input
-                              type="text"
-                              value={gradientColorB}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val.startsWith("#") && val.length <= 7) {
-                                  setGradientColorB(val);
-                                  if (val.length === 7) {
-                                    updateCustomGradient(gradientColorA, val, gradientAngle);
-                                  }
-                                }
-                              }}
-                              className="w-full bg-transparent border-0 text-xs font-mono focus:outline-none text-foreground"
-                            />
                           </div>
                         </div>
-                      </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-                          <span>Gradient Angle</span>
-                          <span>{gradientAngle}°</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="360"
-                          value={gradientAngle}
-                          onChange={(e) => {
-                            const angle = parseInt(e.target.value) || 0;
-                            updateCustomGradient(gradientColorA, gradientColorB, angle);
-                          }}
-                          className="w-full h-1.5 bg-black/60 rounded-lg appearance-none cursor-pointer accent-cyan"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Gradient Presets */}
-                    <div>
-                      <span className="block text-[9px] text-muted-foreground mb-2">
-                        Preset Cyber Gradients (Click to apply instantly):
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          {
-                            name: "Cyan-Blue",
-                            gradient: "linear-gradient(135deg, #00f2fe, #4facfe)",
-                          },
-                          {
-                            name: "Magenta-Purple",
-                            gradient: "linear-gradient(135deg, #e100ff, #7f00ff)",
-                          },
-                          {
-                            name: "Pink-Violet",
-                            gradient: "linear-gradient(135deg, #f107a3, #7b2ff7)",
-                          },
-                          {
-                            name: "Teal-Emerald",
-                            gradient: "linear-gradient(135deg, #00b09b, #96c93d)",
-                          },
-                          {
-                            name: "Sunset Orange",
-                            gradient: "linear-gradient(135deg, #ff5f6d, #ffc371)",
-                          },
-                          {
-                            name: "Toxic Pink",
-                            gradient: "linear-gradient(135deg, #f857a6, #ff5858)",
-                          },
-                          {
-                            name: "Cyber Gold",
-                            gradient: "linear-gradient(135deg, #f59e0b, #d97706)",
-                          },
-                          {
-                            name: "Neon Lime",
-                            gradient: "linear-gradient(135deg, #11998e, #38ef7d)",
-                          },
-                          {
-                            name: "Crimson Blood",
-                            gradient: "linear-gradient(135deg, #ff0844, #ffb199)",
-                          },
-                        ].map((preset) => (
-                          <button
-                            key={preset.name}
-                            type="button"
-                            onClick={() => applyPresetGradient(preset.gradient)}
-                            className="size-7 rounded-lg border border-border/80 hover:scale-110 hover:border-white transition-all cursor-pointer shadow-md"
-                            style={{ background: preset.gradient }}
-                            title={preset.name}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+                            <span>Gradient Angle</span>
+                            <span>{gradientAngle}°</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="360"
+                            value={gradientAngle}
+                            onChange={(e) => {
+                              const angle = parseInt(e.target.value) || 0;
+                              updateCustomGradient(gradientColorA, gradientColorB, angle);
+                            }}
+                            className="w-full h-1.5 bg-black/60 rounded-lg appearance-none cursor-pointer accent-cyan"
                           />
-                        ))}
+                        </div>
+                      </div>
+
+                      {/* Gradient Presets */}
+                      <div>
+                        <span className="block text-[9px] text-muted-foreground mb-2">Preset Cyber Gradients (Click to apply instantly):</span>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { name: "Cyan-Blue", gradient: "linear-gradient(135deg, #00f2fe, #4facfe)" },
+                            { name: "Magenta-Purple", gradient: "linear-gradient(135deg, #e100ff, #7f00ff)" },
+                            { name: "Pink-Violet", gradient: "linear-gradient(135deg, #f107a3, #7b2ff7)" },
+                            { name: "Teal-Emerald", gradient: "linear-gradient(135deg, #00b09b, #96c93d)" },
+                            { name: "Sunset Orange", gradient: "linear-gradient(135deg, #ff5f6d, #ffc371)" },
+                            { name: "Toxic Pink", gradient: "linear-gradient(135deg, #f857a6, #ff5858)" },
+                            { name: "Cyber Gold", gradient: "linear-gradient(135deg, #f59e0b, #d97706)" },
+                            { name: "Neon Lime", gradient: "linear-gradient(135deg, #11998e, #38ef7d)" },
+                            { name: "Crimson Blood", gradient: "linear-gradient(135deg, #ff0844, #ffb199)" }
+                          ].map((preset) => (
+                            <button
+                              key={preset.name}
+                              type="button"
+                              onClick={() => applyPresetGradient(preset.gradient)}
+                              className="size-7 rounded-lg border border-border/80 hover:scale-110 hover:border-white transition-all cursor-pointer shadow-md"
+                              style={{ background: preset.gradient }}
+                              title={preset.name}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
                   {/* Accent Preview Block */}
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Accent Color Preview
-                    </label>
-                    <div
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Accent Color Preview</label>
+                    <div 
                       className="h-9 rounded-lg border border-border/80 flex items-center justify-center text-[10px] text-black font-semibold font-sans tracking-wide transition-all shadow-[inset_0_1px_3px_rgba(255,255,255,0.15)]"
-                      style={{
-                        background: modalDraft.accent || "#000",
-                        color:
-                          modalDraft.accent?.includes("#fff") || modalDraft.accent === "white"
-                            ? "#000"
-                            : "#fff",
-                      }}
+                      style={{ background: modalDraft.accent || "#000", color: modalDraft.accent?.includes("#fff") || modalDraft.accent === "white" ? "#000" : "#fff" }}
                     >
                       Active Accent Theme Rendering
                     </div>
@@ -2290,23 +2193,19 @@ FOR DELETE USING (
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Repository URL
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.repo_url || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Repository URL</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.repo_url || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, repo_url: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Live URL
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.live_url || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Live URL</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.live_url || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, live_url: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
@@ -2314,58 +2213,35 @@ FOR DELETE USING (
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-                      Tech Stack Tags
-                    </label>
-                    <p className="text-[9px] text-muted-foreground mb-2">
-                      Use commas to separate tools (e.g. React, Tailwind CSS, Fastify, Supabase)
-                    </p>
-                    <input
-                      type="text"
-                      value={modalDraft.stack?.join(", ") || ""}
-                      onChange={(e) =>
-                        setModalDraft({
-                          ...modalDraft,
-                          stack: e.target.value.split(",").map((s) => s.trim()),
-                        })
-                      }
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Tech Stack Tags</label>
+                    <p className="text-[9px] text-muted-foreground mb-2">Use commas to separate tools (e.g. React, Tailwind CSS, Fastify, Supabase)</p>
+                    <input 
+                      type="text" 
+                      value={modalDraft.stack?.join(", ") || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, stack: e.target.value.split(",").map(s => s.trim()) })}
                       placeholder="e.g. React, Next.js, Node.js"
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                     />
-
+                    
                     {/* Live Tech Badges Preview */}
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {modalDraft.stack &&
-                      modalDraft.stack.filter((s: string) => s !== "").length > 0 ? (
-                        modalDraft.stack
-                          .filter((s: string) => s !== "")
-                          .map((s: string) => (
-                            <span
-                              key={s}
-                              className="px-2.5 py-0.5 bg-white/5 border border-cyan/20 rounded text-[9px] text-cyan font-sans tracking-wide"
-                            >
-                              {s}
-                            </span>
-                          ))
+                      {modalDraft.stack && modalDraft.stack.filter((s: string) => s !== "").length > 0 ? (
+                        modalDraft.stack.filter((s: string) => s !== "").map((s: string) => (
+                          <span key={s} className="px-2.5 py-0.5 bg-white/5 border border-cyan/20 rounded text-[9px] text-cyan font-sans tracking-wide">
+                            {s}
+                          </span>
+                        ))
                       ) : (
-                        <span className="text-[10px] text-muted-foreground/40 italic">
-                          No stack badges yet
-                        </span>
+                        <span className="text-[10px] text-muted-foreground/40 italic">No stack badges yet</span>
                       )}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Project Logo
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Project Logo</label>
                     <div className="flex items-center gap-4 bg-black/40 border border-border/80 p-3.5 rounded-xl">
                       {modalDraft.logo_url ? (
-                        <img
-                          src={modalDraft.logo_url}
-                          alt="Logo"
-                          className="size-16 object-cover rounded border border-border/80 bg-black"
-                        />
+                        <img src={modalDraft.logo_url} alt="Logo" className="size-16 object-cover rounded border border-border/80 bg-black" />
                       ) : (
                         <div className="size-16 rounded border border-dashed border-border/60 bg-black flex items-center justify-center text-muted-foreground">
                           <Image className="size-6" />
@@ -2379,22 +2255,16 @@ FOR DELETE USING (
                         >
                           <Upload className="size-3" /> Upload Logo
                         </button>
-                        <p className="text-[9px] text-muted-foreground">
-                          Upload square image to secure Supabase Storage.
-                        </p>
+                        <p className="text-[9px] text-muted-foreground">Upload square image to secure Supabase Storage.</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Project Description
-                    </label>
-                    <textarea
-                      value={modalDraft.description || ""}
-                      onChange={(e) =>
-                        setModalDraft({ ...modalDraft, description: e.target.value })
-                      }
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Project Description</label>
+                    <textarea 
+                      value={modalDraft.description || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, description: e.target.value })}
                       rows={5}
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
                     />
@@ -2406,23 +2276,19 @@ FOR DELETE USING (
                 <div className="space-y-4 text-left">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Builder Name
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.name || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Builder Name</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.name || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, name: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Categories (Multiple allowed)
-                      </label>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Categories (Multiple allowed)</label>
                       <div className="flex flex-wrap gap-1.5 p-2 bg-black/40 border border-border rounded-lg max-h-[140px] overflow-y-auto">
                         {localCategories.map((cat) => {
-                          const activeCategories = modalDraft.category
+                          const activeCategories = modalDraft.category 
                             ? modalDraft.category.split(",").map((c: string) => c.trim())
                             : [];
                           const isSelected = activeCategories.includes(cat.name);
@@ -2437,9 +2303,9 @@ FOR DELETE USING (
                                 } else {
                                   newCats = [...activeCategories, cat.name];
                                 }
-                                setModalDraft({
-                                  ...modalDraft,
-                                  category: newCats.filter((c: string) => c !== "").join(", "),
+                                setModalDraft({ 
+                                  ...modalDraft, 
+                                  category: newCats.filter((c: string) => c !== "").join(", ") 
                                 });
                               }}
                               className={`px-2.5 py-1 rounded text-[11px] font-mono transition-all border cursor-pointer ${
@@ -2458,23 +2324,19 @@ FOR DELETE USING (
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Role / Title
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.role || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Role / Title</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.role || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, role: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Location
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.location || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Location</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.location || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, location: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
@@ -2483,26 +2345,20 @@ FOR DELETE USING (
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Tagline
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.tagline || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Tagline</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.tagline || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, tagline: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Experience (Years)
-                      </label>
-                      <input
-                        type="number"
-                        value={modalDraft.years_exp ?? 0}
-                        onChange={(e) =>
-                          setModalDraft({ ...modalDraft, years_exp: parseInt(e.target.value) || 0 })
-                        }
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Experience (Years)</label>
+                      <input 
+                        type="number" 
+                        value={modalDraft.years_exp ?? 0} 
+                        onChange={(e) => setModalDraft({ ...modalDraft, years_exp: parseInt(e.target.value) || 0 })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
@@ -2512,15 +2368,11 @@ FOR DELETE USING (
                   <div className="bg-black/30 border border-border/60 p-4 rounded-xl space-y-3.5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <label className="block text-[10px] uppercase tracking-widest text-muted-foreground">
-                          Color Theme Hue: {modalDraft.hue ?? 0}°
-                        </label>
-                        <p className="text-[9px] text-muted-foreground">
-                          Drag to dynamically rotate the profile gradient colors
-                        </p>
+                        <label className="block text-[10px] uppercase tracking-widest text-muted-foreground">Color Theme Hue: {modalDraft.hue ?? 0}°</label>
+                        <p className="text-[9px] text-muted-foreground">Drag to dynamically rotate the profile gradient colors</p>
                       </div>
                       {/* Avatar Dynamic HSL Theme Preview Circle */}
-                      <div
+                      <div 
                         className="size-10 rounded-full border border-black/85 shadow-md flex items-center justify-center font-bold text-sm text-black select-none shrink-0 transition-all duration-150"
                         style={{
                           background: `linear-gradient(135deg, hsl(${modalDraft.hue || 0}, 80%, 60%), hsl(${(modalDraft.hue || 0) + 60}, 80%, 40%))`,
@@ -2529,49 +2381,41 @@ FOR DELETE USING (
                         {modalDraft.name ? modalDraft.name.charAt(0).toUpperCase() : "?"}
                       </div>
                     </div>
-
-                    <input
-                      type="range"
-                      min="0"
+                    
+                    <input 
+                      type="range" 
+                      min="0" 
                       max="360"
                       value={modalDraft.hue ?? 0}
-                      onChange={(e) =>
-                        setModalDraft({ ...modalDraft, hue: parseInt(e.target.value) || 0 })
-                      }
+                      onChange={(e) => setModalDraft({ ...modalDraft, hue: parseInt(e.target.value) || 0 })}
                       className="w-full h-1.5 bg-black/60 rounded-lg appearance-none cursor-pointer accent-cyan"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Github Username
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.github || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Github Username</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.github || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, github: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={modalDraft.email || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Email Address</label>
+                      <input 
+                        type="email" 
+                        value={modalDraft.email || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, email: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Personal Website
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.website || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Personal Website</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.website || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, website: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
@@ -2579,18 +2423,12 @@ FOR DELETE USING (
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Avatar Image
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Avatar Image</label>
                     <div className="flex items-center gap-4 bg-black/40 border border-border/80 p-3.5 rounded-xl">
                       {modalDraft.avatar_url ? (
-                        <img
-                          src={modalDraft.avatar_url}
-                          alt="Avatar"
-                          className="size-16 object-cover rounded-full border border-border/80 bg-black"
-                        />
+                        <img src={modalDraft.avatar_url} alt="Avatar" className="size-16 object-cover rounded-full border border-border/80 bg-black" />
                       ) : (
-                        <div
+                        <div 
                           className="size-16 rounded-full border border-border/80 flex items-center justify-center font-bold text-lg text-black"
                           style={{
                             background: `linear-gradient(135deg, hsl(${modalDraft.hue || 0}, 80%, 60%), hsl(${(modalDraft.hue || 0) + 60}, 80%, 40%))`,
@@ -2607,73 +2445,50 @@ FOR DELETE USING (
                         >
                           <Upload className="size-3" /> Upload Avatar
                         </button>
-                        <p className="text-[9px] text-muted-foreground">
-                          Upload high-res profile photo to Supabase storage.
-                        </p>
+                        <p className="text-[9px] text-muted-foreground">Upload high-res profile photo to Supabase storage.</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-                      Skills Array
-                    </label>
-                    <p className="text-[9px] text-muted-foreground mb-2">
-                      Use commas to separate skills (e.g. TypeScript, React, Docker, CI/CD, Python)
-                    </p>
-                    <input
-                      type="text"
-                      value={modalDraft.skills?.join(", ") || ""}
-                      onChange={(e) =>
-                        setModalDraft({
-                          ...modalDraft,
-                          skills: e.target.value.split(",").map((s) => s.trim()),
-                        })
-                      }
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Skills Array</label>
+                    <p className="text-[9px] text-muted-foreground mb-2">Use commas to separate skills (e.g. TypeScript, React, Docker, CI/CD, Python)</p>
+                    <input 
+                      type="text" 
+                      value={modalDraft.skills?.join(", ") || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, skills: e.target.value.split(",").map(s => s.trim()) })}
                       placeholder="e.g. Next.js, Node.js, AWS"
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                     />
-
+                    
                     {/* Live Skills Preview */}
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {modalDraft.skills &&
-                      modalDraft.skills.filter((s: string) => s !== "").length > 0 ? (
-                        modalDraft.skills
-                          .filter((s: string) => s !== "")
-                          .map((s: string) => (
-                            <span
-                              key={s}
-                              className="px-2.5 py-0.5 bg-white/5 border border-cyan/20 rounded text-[9px] text-cyan font-sans tracking-wide"
-                            >
-                              {s}
-                            </span>
-                          ))
+                      {modalDraft.skills && modalDraft.skills.filter((s: string) => s !== "").length > 0 ? (
+                        modalDraft.skills.filter((s: string) => s !== "").map((s: string) => (
+                          <span key={s} className="px-2.5 py-0.5 bg-white/5 border border-cyan/20 rounded text-[9px] text-cyan font-sans tracking-wide">
+                            {s}
+                          </span>
+                        ))
                       ) : (
-                        <span className="text-[10px] text-muted-foreground/40 italic">
-                          No skills added yet
-                        </span>
+                        <span className="text-[10px] text-muted-foreground/40 italic">No skills added yet</span>
                       )}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Fun Fact
-                    </label>
-                    <input
-                      type="text"
-                      value={modalDraft.fun_fact || ""}
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Fun Fact</label>
+                    <input 
+                      type="text" 
+                      value={modalDraft.fun_fact || ""} 
                       onChange={(e) => setModalDraft({ ...modalDraft, fun_fact: e.target.value })}
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Biography
-                    </label>
-                    <textarea
-                      value={modalDraft.bio || ""}
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Biography</label>
+                    <textarea 
+                      value={modalDraft.bio || ""} 
                       onChange={(e) => setModalDraft({ ...modalDraft, bio: e.target.value })}
                       rows={5}
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
@@ -2686,20 +2501,16 @@ FOR DELETE USING (
                 <div className="space-y-4 text-left">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Service Name
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.title || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Service Name</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.title || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, title: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Lucide Icon
-                      </label>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Lucide Icon</label>
                       <select
                         value={modalDraft.icon || "Terminal"}
                         onChange={(e) => setModalDraft({ ...modalDraft, icon: e.target.value })}
@@ -2715,14 +2526,10 @@ FOR DELETE USING (
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Description
-                    </label>
-                    <textarea
-                      value={modalDraft.description || ""}
-                      onChange={(e) =>
-                        setModalDraft({ ...modalDraft, description: e.target.value })
-                      }
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Description</label>
+                    <textarea 
+                      value={modalDraft.description || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, description: e.target.value })}
                       rows={5}
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
                     />
@@ -2733,12 +2540,10 @@ FOR DELETE USING (
               {activeTab === "categories" && (
                 <div className="space-y-4 text-left">
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Category Name
-                    </label>
-                    <input
-                      type="text"
-                      value={modalDraft.name || ""}
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Category Name</label>
+                    <input 
+                      type="text" 
+                      value={modalDraft.name || ""} 
                       onChange={(e) => setModalDraft({ ...modalDraft, name: e.target.value })}
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                     />
@@ -2750,24 +2555,20 @@ FOR DELETE USING (
                 <div className="space-y-4 text-left">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Metric / Badge
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.metric || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Metric / Badge</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.metric || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, metric: e.target.value })}
                         placeholder="e.g. 1st Place, 10+"
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                        Achievement Title
-                      </label>
-                      <input
-                        type="text"
-                        value={modalDraft.title || ""}
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Achievement Title</label>
+                      <input 
+                        type="text" 
+                        value={modalDraft.title || ""} 
                         onChange={(e) => setModalDraft({ ...modalDraft, title: e.target.value })}
                         className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans"
                       />
@@ -2775,16 +2576,10 @@ FOR DELETE USING (
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Certificate Image
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Certificate Image</label>
                     <div className="flex items-center gap-4 bg-black/40 border border-border/80 p-3.5 rounded-xl">
                       {modalDraft.image_url ? (
-                        <img
-                          src={modalDraft.image_url}
-                          alt="Certificate"
-                          className="size-20 object-cover rounded border border-border/80 bg-black"
-                        />
+                        <img src={modalDraft.image_url} alt="Certificate" className="size-20 object-cover rounded border border-border/80 bg-black" />
                       ) : (
                         <div className="size-20 rounded border border-dashed border-border/60 bg-black flex items-center justify-center text-muted-foreground">
                           <Image className="size-6" />
@@ -2798,22 +2593,16 @@ FOR DELETE USING (
                         >
                           <Upload className="size-3" /> Upload Certificate
                         </button>
-                        <p className="text-[9px] text-muted-foreground">
-                          Upload official trophy or certificate scan to Supabase storage.
-                        </p>
+                        <p className="text-[9px] text-muted-foreground">Upload official trophy or certificate scan to Supabase storage.</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                      Achievement Description
-                    </label>
-                    <textarea
-                      value={modalDraft.description || ""}
-                      onChange={(e) =>
-                        setModalDraft({ ...modalDraft, description: e.target.value })
-                      }
+                    <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Achievement Description</label>
+                    <textarea 
+                      value={modalDraft.description || ""} 
+                      onChange={(e) => setModalDraft({ ...modalDraft, description: e.target.value })}
                       rows={5}
                       className="w-full bg-black/60 border border-border hover:border-cyan/40 focus:border-cyan rounded-lg px-3 py-2 text-xs text-foreground outline-none transition-all font-sans leading-relaxed resize-y"
                     />
@@ -2841,6 +2630,7 @@ FOR DELETE USING (
                 Apply Changes
               </button>
             </div>
+
           </div>
         </div>
       )}

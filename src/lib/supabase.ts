@@ -4,10 +4,10 @@ const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || "";
 
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl &&
-  supabaseAnonKey &&
-  supabaseUrl !== "https://your-project-id.supabase.co" &&
-  supabaseAnonKey !== "your-anon-key",
+  supabaseUrl && 
+  supabaseAnonKey && 
+  supabaseUrl !== "https://your-project-id.supabase.co" && 
+  supabaseAnonKey !== "your-anon-key"
 );
 
 // We define a dynamic getter for headers so Supabase always picks up the latest key
@@ -23,33 +23,33 @@ export const supabase = createClient(
             return sessionStorage.getItem("admin_key") || "";
           }
           return "";
-        },
-      },
-    },
-  },
-);
-
-// Dynamic helper to update both REST and Storage headers since Supabase deep-copies options at init time
-export function setSupabaseAdminKey(key: string) {
-  if (!supabase) return;
-
-  if ((supabase as any).rest?.headers) {
-    if (typeof (supabase as any).rest.headers.set === "function") {
-      (supabase as any).rest.headers.set("x-admin-key", key);
-    } else {
-      (supabase as any).rest.headers["x-admin-key"] = key;
+        }
+      }
     }
   }
-
-  if ((supabase as any).storage?.headers) {
-    if (typeof (supabase as any).storage.headers.set === "function") {
-      (supabase as any).storage.headers.set("x-admin-key", key);
+);
+// Dynamic helper to update both REST and Storage headers safely since Supabase deep-copies options at init time
+export function setSupabaseAdminKey(key: string) {
+  if (!supabase) return;
+  
+  const restHeaders = (supabase as any).rest?.headers;
+  if (restHeaders) {
+    if (typeof restHeaders.set === "function") {
+      restHeaders.set("x-admin-key", key);
     } else {
-      (supabase as any).storage.headers["x-admin-key"] = key;
+      restHeaders["x-admin-key"] = key;
+    }
+  }
+  
+  const storageHeaders = (supabase as any).storage?.headers;
+  if (storageHeaders) {
+    if (typeof storageHeaders.set === "function") {
+      storageHeaders.set("x-admin-key", key);
+    } else {
+      storageHeaders["x-admin-key"] = key;
     }
   }
 }
-
 // Auto-restore admin key from sessionStorage on initial load/refresh
 if (typeof window !== "undefined") {
   const savedKey = sessionStorage.getItem("admin_key");

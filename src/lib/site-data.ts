@@ -1,6 +1,7 @@
 import historyMindLogo from "@/assets/historymind-logo.png";
 
 export type Project = {
+  id?: string;
   title: string;
   description: string;
   stack: string[];

@@ -9,6 +9,7 @@ export type TeamCategory =
   | "Fullstack";
 
 export type Builder = {
+  id?: string;
   name: string;
   role: string;
   category: string;
